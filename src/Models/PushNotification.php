@@ -4,8 +4,8 @@ namespace Webkul\API\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use Webkul\Core\Models\Channel;
 use Webkul\API\Contracts\PushNotification as PushNotificationContract;
+use Webkul\Core\Models\Channel;
 
 class PushNotification extends Model implements PushNotificationContract
 {
@@ -14,7 +14,7 @@ class PushNotification extends Model implements PushNotificationContract
     public $timestamps = true;
 
     protected $guarded = ['_token'];
-   
+
     /**
      * Translated attributes.
      *
@@ -50,16 +50,17 @@ class PushNotification extends Model implements PushNotificationContract
      */
     public function translations()
     {
-        return $this->hasMany(PushNotificationTranslationProxy::modelClass(),'push_notification_id');
+        return $this->hasMany(PushNotificationTranslationProxy::modelClass(), 'push_notification_id');
     }
-    
+
     /**
      * Get image url for the Banner image.
      */
     public function image_url()
     {
-        if (! $this->image)
+        if (! $this->image) {
             return;
+        }
 
         return Storage::url($this->image);
     }
@@ -77,17 +78,17 @@ class PushNotification extends Model implements PushNotificationContract
      */
     public function notificationChannelsArray()
     {
-        $channels   = [];
-        
+        $channels = [];
+
         foreach ($this->translations as $translation) {
             $channelList = Channel::query()->pluck('code')->toArray();
             $channelDetail = Channel::query()->where('code', $translation->channel)->first();
-            
-            if (in_array($translation->channel, $channelList) && isset($channelDetail->code) && !in_array($channelDetail->code, $channels)) {
+
+            if (in_array($translation->channel, $channelList) && isset($channelDetail->code) && ! in_array($channelDetail->code, $channels)) {
                 array_push($channels, $channelDetail->code);
             }
         }
-        
+
         return $channels;
     }
 }

@@ -17,7 +17,7 @@ class ProductVideo extends JsonResource
         return [
             'id'    => $this->id,
             'type'  => $this->type,
-            'url'   => $this->url
+            'url'   => $this->url,
         ];
     }
 }

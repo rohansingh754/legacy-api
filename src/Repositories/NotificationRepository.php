@@ -2,10 +2,10 @@
 
 namespace Webkul\API\Repositories;
 
-use Webkul\Core\Eloquent\Repository;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Container\Container as App;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
+use Webkul\Core\Eloquent\Repository;
 
 class NotificationRepository extends Repository
 {
@@ -13,8 +13,6 @@ class NotificationRepository extends Repository
      * Create a new repository instance.
      *
      * @param  \Webkul\Attribute\Repositories\AttributeRepository  $attributeRepository
-     * @param  \Illuminate\Container\Container  $app
-     *
      * @return void
      */
     public function __construct(
@@ -31,13 +29,12 @@ class NotificationRepository extends Repository
      */
     public function model()
     {
-        return 'Webkul\API\Contracts\PushNotification'; 
+        return 'Webkul\API\Contracts\PushNotification';
     }
 
     /**
      * Create notification.
      *
-     * @param  array  $data
      * @return \Webkul\API\Contracts\Notification
      */
     public function create(array $data)
@@ -78,28 +75,27 @@ class NotificationRepository extends Repository
     /**
      * Update notification.
      *
-     * @param  array  $data
      * @param  int  $id
      * @param  string  $attribute
      * @return \Webkul\API\Contracts\Notification
      */
-    public function update(array $data, $id, $attribute = "id")
+    public function update(array $data, $id, $attribute = 'id')
     {
         Event::dispatch('api.notification.update.before', $id);
 
         $notification = $this->find($id);
-        
+
         $notification->update($data);
 
         if (isset($data['channel']) && isset($data['locale'])) {
             $model = app()->make($this->model());
-            
+
             $notificationTranslation = $this->notificationTranslationRepository->findOneWhere([
                 'channel'               => $data['channel'],
                 'locale'                => $data['locale'],
                 'push_notification_id'  => $data['notification_id'],
             ]);
-            
+
             if ($notificationTranslation) {
                 foreach ($model->translatedAttributes as $attribute) {
                     if (isset($data[$attribute])) {
@@ -109,9 +105,9 @@ class NotificationRepository extends Repository
                 $notificationTranslation->save();
             }
         }
-        
+
         $this->uploadImages($data, $notification);
-        
+
         Event::dispatch('api.notification.update.after', $notification);
 
         return $notification;
@@ -122,17 +118,17 @@ class NotificationRepository extends Repository
      *
      * @param  array  $data
      * @param  \Webkul\API\Contracts\Notification  $notification
-     * @param  string $type
+     * @param  string  $type
      * @return void
      */
-    public function uploadImages($data, $notification, $type = "image")
+    public function uploadImages($data, $notification, $type = 'image')
     {
         if (isset($data[$type])) {
             $request = request();
 
             foreach ($data[$type] as $imageId => $image) {
-                $file = $type . '.' . $imageId;
-                $dir = 'notification/images/' . $notification->id;
+                $file = $type.'.'.$imageId;
+                $dir = 'notification/images/'.$notification->id;
 
                 if ($request->hasFile($file)) {
                     if ($notification->{$type}) {

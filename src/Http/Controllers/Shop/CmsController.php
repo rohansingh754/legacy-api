@@ -17,7 +17,7 @@ class CmsController extends Controller
         $this->guard = request()->has('token') ? 'api' : 'customer';
 
         auth()->setDefaultDriver($this->guard);
-        
+
         $this->middleware('validateAPIHeader');
 
         $this->_config = request('_config');
@@ -25,8 +25,6 @@ class CmsController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
     public function index(): ?JsonResponse
     {

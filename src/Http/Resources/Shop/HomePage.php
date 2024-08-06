@@ -3,11 +3,11 @@
 namespace Webkul\API\Http\Resources\Shop;
 
 use Carbon\Carbon;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Webkul\Checkout\Facades\Cart;
-use Illuminate\Support\Facades\Storage;
 use Webkul\Product\Facades\ProductImage as ProductImageFacade;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 class HomePage extends JsonResource
 {
@@ -31,7 +31,7 @@ class HomePage extends JsonResource
      * @var string
      */
     protected $localeCode;
-    
+
     /**
      * Create a new resource instance.
      *
@@ -52,7 +52,7 @@ class HomePage extends JsonResource
         $this->cmsRepository = app('Webkul\CMS\Repositories\CmsRepository');
 
         $this->wishlistHelper = app('Webkul\Customer\Helpers\Wishlist');
-        
+
         parent::__construct($resource);
     }
 
@@ -69,7 +69,7 @@ class HomePage extends JsonResource
         $this->localeCode = request()->input('locale');
 
         $channel = $this->channelRepository->find($this->channel);
-        
+
         $defaultCurrency = $channel->currencies()->where('id', $channel->base_currency_id)->first();
 
         return [
@@ -89,7 +89,7 @@ class HomePage extends JsonResource
     /**
      * Get the slider array based on channel.
      *
-     * @param  \Webkul\Core\Contracts\Channel   $channel
+     * @param  \Webkul\Core\Contracts\Channel  $channel
      * @return array
      */
     public function getSlider($channel = null)
@@ -98,7 +98,7 @@ class HomePage extends JsonResource
         $channel = $channel ?? core()->getCurrentChannel();
 
         $sliders = $this->sliderRepository->where('channel_id', $channel->id)
-            ->whereRaw("find_in_set(?, locale)", [$this->localeCode])
+            ->whereRaw('find_in_set(?, locale)', [$this->localeCode])
             ->where(function ($query) {
                 $query->where('expired_at', '>=', Carbon::now()->format('Y-m-d'))
                     ->orWhereNull('expired_at');
@@ -111,18 +111,19 @@ class HomePage extends JsonResource
             $slug_type = '';
             $redirect_id = null;
 
-            if ( $path ) {
-                $getSlug = explode("/", $path);
-                if ( count($getSlug) > 1 )
+            if ($path) {
+                $getSlug = explode('/', $path);
+                if (count($getSlug) > 1) {
                     $path = $getSlug[1];
+                }
 
-                if ( $category = $this->categoryRepository->whereTranslation('slug', $path)->first() ) {
+                if ($category = $this->categoryRepository->whereTranslation('slug', $path)->first()) {
                     $slug_type = 'category';
                     $redirect_id = $category->id;
-                } elseif ( $product = $this->productRepository->findOneByField('sku', $path) ) {
+                } elseif ($product = $this->productRepository->findOneByField('sku', $path)) {
                     $slug_type = 'product';
                     $redirect_id = $product->id;
-                } elseif ( $cms = $this->cmsRepository->whereTranslation('url_key', $path)->first() ) {
+                } elseif ($cms = $this->cmsRepository->whereTranslation('url_key', $path)->first()) {
                     $slug_type = 'cms';
                     $redirect_id = $cms->id;
                 }
@@ -138,7 +139,7 @@ class HomePage extends JsonResource
                 'redirect_id'   => $redirect_id,
             ];
         }
-        
+
         return $sliderData;
     }
 
@@ -153,10 +154,10 @@ class HomePage extends JsonResource
         foreach (core()->getAllChannels() as $channel) {
             $locales = [];
 
-            if ( $channel ) {
+            if ($channel) {
                 foreach ($channel->locales as $locale) {
-                
-                    if ( $locale ) {
+
+                    if ($locale) {
                         $locales[] = [
                             'id'        => $channel->id,
                             'locale_id' => $locale->id,
@@ -181,7 +182,7 @@ class HomePage extends JsonResource
     /**
      * Get HomePageContent of the channel's theme.
      *
-     * @param  \Webkul\Core\Contracts\Channel   $channel
+     * @param  \Webkul\Core\Contracts\Channel  $channel
      * @return void
      */
     public function getThemeHomePageContent($channel = null)
@@ -191,18 +192,18 @@ class HomePage extends JsonResource
         $themeHomePageContent = $channel->home_page_content;
 
         $velocity = $this->velocityHelper->getVelocityMetaData();
-        if ( $channel->theme == 'velocity' && $velocity->home_page_content ) {
+        if ($channel->theme == 'velocity' && $velocity->home_page_content) {
             $themeHomePageContent = $velocity->home_page_content;
         }
-        
-        $home_page_content = explode("@include", strip_tags($themeHomePageContent));
+
+        $home_page_content = explode('@include', strip_tags($themeHomePageContent));
         foreach (array_filter($home_page_content) as $content) {
 
-            if ( $arrayContent = $this->getTemplateContent(rtrim(ltrim(str_replace(" ", "", $content), "("), ")"), $velocity) ) {
+            if ($arrayContent = $this->getTemplateContent(rtrim(ltrim(str_replace(' ', '', $content), '('), ')'), $velocity)) {
                 $homePageContent[] = $arrayContent;
             }
         }
-        
+
         return $homePageContent;
     }
 
@@ -216,25 +217,25 @@ class HomePage extends JsonResource
         $homeContent = null;
         $advertisement = isset($theme->advertisement) ? json_decode($theme->advertisement, true) : null;
 
-        if ( Str::contains($trimedString, "'shop::home.category'") ) {
+        if (Str::contains($trimedString, "'shop::home.category'")) {
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.category',", "['category'=>");
-            if ( $trimedContent ) {
-                $slug = str_replace("'", "", $trimedContent[0]);
-                
+            if ($trimedContent) {
+                $slug = str_replace("'", '', $trimedContent[0]);
+
                 $category = $this->categoryRepository->whereTranslation('slug', $slug)->first();
-                if ( $category ) {
+                if ($category) {
                     $homeContent = [
                         'type'      => 'category',
                         'slug'      => $slug,
                         'label'     => $category->name,
                         'image_url' => $category->image_url,
-                        'id'        => $category->id
+                        'id'        => $category->id,
                     ];
                 }
             }
-        } else if ( Str::contains($trimedString, "'shop::home.advertisements.advertisement-four'") ) {
+        } elseif (Str::contains($trimedString, "'shop::home.advertisements.advertisement-four'")) {
             $advertisementFour = isset($advertisement[4]) ? array_values(array_filter($advertisement[4])) : [];
-            
+
             $homeContent = [
                 'type'          => 'advertisement',
                 'slug'          => 'four',
@@ -244,70 +245,71 @@ class HomePage extends JsonResource
                         'image_url'     => asset('/themes/velocity/assets/images/big-sale-banner.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
+                        'id'            => null,
                     ],  [
                         'image_url'     => asset('/themes/velocity/assets/images/seasons.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
+                        'id'            => null,
                     ],  [
                         'image_url'     => asset('/themes/velocity/assets/images/deals.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
+                        'id'            => null,
                     ],  [
                         'image_url'     => asset('/themes/velocity/assets/images/kids.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
-                    ]
-                ]
+                        'id'            => null,
+                    ],
+                ],
             ];
 
-            foreach($advertisementFour as $key => $advertisement) {
+            foreach ($advertisementFour as $key => $advertisement) {
                 $homeContent['custom_data'][$key]['image_url'] = $advertisement[$key];
             }
-            
+
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.advertisements.advertisement-four',");
-            if ( $trimedContent ) {
-                $slugs = explode(",", $trimedContent);
-                
+            if ($trimedContent) {
+                $slugs = explode(',', $trimedContent);
+
                 foreach ($slugs as $slug) {
-                    $categorySlug = explode("=>", str_replace("'", "", $slug));
-                    
+                    $categorySlug = explode('=>', str_replace("'", '', $slug));
+
                     $category = $this->categoryRepository->whereTranslation('slug', $categorySlug[1])->first();
 
-                    if ( $category ) {
-                        if ( $categorySlug[0] == 'one')
+                    if ($category) {
+                        if ($categorySlug[0] == 'one') {
                             $homeContent['custom_data'][0] = array_merge($homeContent['custom_data'][0], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
-                        else if ( $categorySlug[0] == 'two')
+                        } elseif ($categorySlug[0] == 'two') {
                             $homeContent['custom_data'][1] = array_merge($homeContent['custom_data'][1], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
-                        else if ( $categorySlug[0] == 'three')
+                        } elseif ($categorySlug[0] == 'three') {
                             $homeContent['custom_data'][2] = array_merge($homeContent['custom_data'][2], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
-                        else if ( $categorySlug[0] == 'four')
+                        } elseif ($categorySlug[0] == 'four') {
                             $homeContent['custom_data'][3] = array_merge($homeContent['custom_data'][3], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
+                        }
                     }
                 }
             }
-        } else if ( Str::contains($trimedString, "'shop::home.advertisements.advertisement-three'") ) {
+        } elseif (Str::contains($trimedString, "'shop::home.advertisements.advertisement-three'")) {
             $advertisementThree = isset($advertisement[3]) ? array_values(array_filter($advertisement[3])) : [];
-            
+
             $homeContent = [
                 'type'          => 'advertisement',
                 'slug'          => 'three',
@@ -317,59 +319,60 @@ class HomePage extends JsonResource
                         'image_url'     => asset('/themes/velocity/assets/images/headphones.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
+                        'id'            => null,
                     ],  [
                         'image_url'     => asset('/themes/velocity/assets/images/watch.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
+                        'id'            => null,
                     ],  [
                         'image_url'     => asset('/themes/velocity/assets/images/kids-2.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
-                    ]
-                ]
+                        'id'            => null,
+                    ],
+                ],
             ];
 
-            foreach($advertisementThree as $key => $advertisement) {
+            foreach ($advertisementThree as $key => $advertisement) {
                 $homeContent['custom_data'][$key]['image_url'] = $advertisement[$key];
             }
-            
+
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.advertisements.advertisement-three',");
-            if ( $trimedContent ) {
-                $slugs = explode(",", $trimedContent);
-                
+            if ($trimedContent) {
+                $slugs = explode(',', $trimedContent);
+
                 foreach ($slugs as $slug) {
-                    $categorySlug = explode("=>", str_replace("'", "", $slug));
-                    
+                    $categorySlug = explode('=>', str_replace("'", '', $slug));
+
                     $category = $this->categoryRepository->whereTranslation('slug', $categorySlug[1])->first();
 
-                    if ( $category ) {
-                        if ( $categorySlug[0] == 'one')
+                    if ($category) {
+                        if ($categorySlug[0] == 'one') {
                             $homeContent['custom_data'][0] = array_merge($homeContent['custom_data'][0], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
-                        else if ( $categorySlug[0] == 'two')
+                        } elseif ($categorySlug[0] == 'two') {
                             $homeContent['custom_data'][1] = array_merge($homeContent['custom_data'][1], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
-                        else if ( $categorySlug[0] == 'three')
+                        } elseif ($categorySlug[0] == 'three') {
                             $homeContent['custom_data'][2] = array_merge($homeContent['custom_data'][2], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
+                        }
                     }
                 }
             }
-        } else if ( Str::contains($trimedString, "'shop::home.advertisements.advertisement-two'") ) {
+        } elseif (Str::contains($trimedString, "'shop::home.advertisements.advertisement-two'")) {
             $advertisementTwo = isset($advertisement[2]) ? array_values(array_filter($advertisement[2])) : [];
-            
+
             $homeContent = [
                 'type'          => 'advertisement',
                 'slug'          => 'two',
@@ -379,59 +382,60 @@ class HomePage extends JsonResource
                         'image_url'     => asset('/themes/velocity/assets/images/toster.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
+                        'id'            => null,
                     ],  [
                         'image_url'     => asset('/themes/velocity/assets/images/trimmer.webp'),
                         'label'         => '',
                         'slug'          => '',
-                        'id'            => null
-                    ]
-                ]
+                        'id'            => null,
+                    ],
+                ],
             ];
 
-            foreach($advertisementTwo as $key => $advertisement) {
+            foreach ($advertisementTwo as $key => $advertisement) {
                 $homeContent['custom_data'][$key]['image_url'] = $advertisement[$key];
             }
-            
+
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.advertisements.advertisement-two',");
-            if ( $trimedContent ) {
-                $slugs = explode(",", $trimedContent);
-                
+            if ($trimedContent) {
+                $slugs = explode(',', $trimedContent);
+
                 foreach ($slugs as $slug) {
-                    $categorySlug = explode("=>", str_replace("'", "", $slug));
-                    
+                    $categorySlug = explode('=>', str_replace("'", '', $slug));
+
                     $category = $this->categoryRepository->whereTranslation('slug', $categorySlug[1])->first();
 
-                    if ( $category ) {
-                        if ( $categorySlug[0] == 'one')
+                    if ($category) {
+                        if ($categorySlug[0] == 'one') {
                             $homeContent['custom_data'][0] = array_merge($homeContent['custom_data'][0], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
-                        else if ( $categorySlug[0] == 'two')
+                        } elseif ($categorySlug[0] == 'two') {
                             $homeContent['custom_data'][1] = array_merge($homeContent['custom_data'][1], [
                                 'label'     => $category->name,
                                 'slug'      => $categorySlug[1],
-                                'id'        => $category->id
+                                'id'        => $category->id,
                             ]);
+                        }
                     }
                 }
             }
-        } else if ( Str::contains($trimedString, "'shop::home.category-with-custom-option'") ) {
+        } elseif (Str::contains($trimedString, "'shop::home.category-with-custom-option'")) {
             $homeContent = [
                 'type'  => 'category-with-custom-option',
                 'slug'  => 'category',
-                'id'    => null
+                'id'    => null,
             ];
 
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.category-with-custom-option',", "['category'=>[");
-            if ( $trimedContent ) {
-                $slugs = explode(",", str_replace("'", "", $trimedContent[0]));
-                
+            if ($trimedContent) {
+                $slugs = explode(',', str_replace("'", '', $trimedContent[0]));
+
                 foreach ($slugs as $slug) {
                     $category = $this->categoryRepository->whereTranslation('slug', $slug)->first();
-                    if ( $category ) {
+                    if ($category) {
                         $children = $this->categoryRepository->findByField('parent_id', $category->id);
 
                         $homeContent['custom_data'][] = [
@@ -444,20 +448,20 @@ class HomePage extends JsonResource
                     }
                 }
             }
-        } else if ( Str::contains($trimedString, "'shop::home.hot-categories'") ) {
+        } elseif (Str::contains($trimedString, "'shop::home.hot-categories'")) {
             $homeContent = [
                 'label' => trans('velocity::app.home.hot-categories'),
                 'type'  => 'hot-categories',
                 'slug'  => 'category',
-                'id'    => null
+                'id'    => null,
             ];
 
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.hot-categories',", "['category'=>[");
-            if ( $trimedContent ) {
-                $slugs = explode(",", str_replace("'", "", $trimedContent[0]));
+            if ($trimedContent) {
+                $slugs = explode(',', str_replace("'", '', $trimedContent[0]));
                 foreach ($slugs as $slug) {
                     $category = $this->categoryRepository->whereTranslation('slug', $slug)->first();
-                    if ( $category ) {
+                    if ($category) {
                         $children = $this->categoryRepository->findByField('parent_id', $category->id);
 
                         $homeContent['custom_data'][] = [
@@ -465,26 +469,26 @@ class HomePage extends JsonResource
                             'label'     => $category->name,
                             'slug'      => $slug,
                             'id'        => $category->id,
-                            'children'  => $children ? $children->toArray() : []
+                            'children'  => $children ? $children->toArray() : [],
                         ];
                     }
                 }
             }
-        } else if ( Str::contains($trimedString, "shop::home.featured-products") ) {
+        } elseif (Str::contains($trimedString, 'shop::home.featured-products')) {
             $homeContent = [
                 'label' => trans('shop::app.home.featured-products'),
                 'type'  => 'featured-products',
                 'slug'  => 'product',
-                'id'    => null
+                'id'    => null,
             ];
-            
+
             $featuredProducts = $this->productRepository->getFeaturedProducts();
             foreach ($featuredProducts as $productFlat) {
                 $baseImage = ProductImageFacade::getProductBaseImage($productFlat->product);
-                
+
                 /* get type instance */
                 $productTypeInstance = $productFlat->product->getTypeInstance();
-                
+
                 $homeContent['custom_data'][] = [
                     'image_url'     => $baseImage['medium_image_url'],
                     'label'         => $productFlat->name,
@@ -492,26 +496,26 @@ class HomePage extends JsonResource
                     'slug'          => $productFlat->url_key,
                     'is_wishlisted' => $this->wishlistHelper->getWishlistProduct($productFlat) ? true : false,
                     'price'         => $productTypeInstance->getMinimalPrice(),
-                    'formated_price'=> core()->currency($productTypeInstance->getMinimalPrice()),
-                    'id'        => $productFlat->product_id
+                    'formated_price' => core()->currency($productTypeInstance->getMinimalPrice()),
+                    'id'            => $productFlat->product_id,
                 ];
             }
-        } else if ( Str::contains($trimedString, "shop::home.new-products") ) {
+        } elseif (Str::contains($trimedString, 'shop::home.new-products')) {
             $homeContent = [
                 'label' => trans('shop::app.home.new-products'),
                 'type'  => 'new-products',
                 'slug'  => 'product',
-                'id'    => null
+                'id'    => null,
             ];
 
             $newProducts = $this->productRepository->getNewProducts();
-            
+
             foreach ($newProducts as $productFlat) {
                 $baseImage = ProductImageFacade::getProductBaseImage($productFlat->product);
-                
+
                 /* get type instance */
                 $productTypeInstance = $productFlat->product->getTypeInstance();
-                
+
                 $homeContent['custom_data'][] = [
                     'image_url'     => $baseImage['medium_image_url'],
                     'label'         => $productFlat->name,
@@ -519,62 +523,62 @@ class HomePage extends JsonResource
                     'slug'          => $productFlat->url_key,
                     'is_wishlisted' => $this->wishlistHelper->getWishlistProduct($productFlat) ? true : false,
                     'price'         => $productTypeInstance->getMinimalPrice(),
-                    'formated_price'=> core()->currency($productTypeInstance->getMinimalPrice()),
-                    'id'            => $productFlat->product_id
+                    'formated_price' => core()->currency($productTypeInstance->getMinimalPrice()),
+                    'id'            => $productFlat->product_id,
                 ];
             }
-        } else if ( Str::contains($trimedString, "shop::home.product-policy") ) {
+        } elseif (Str::contains($trimedString, 'shop::home.product-policy')) {
             $product_policy = array_values(array_filter(explode("\r\n", strip_tags($theme->product_policy))));
 
             $homeContent = [
                 'type'          => 'product-policy',
                 'slug'          => 'policy',
                 'id'            => null,
-                'custom_data'   => []
+                'custom_data'   => [],
             ];
 
             foreach ($product_policy as $key => $policy) {
                 $homeContent['custom_data'][$key] = [
                     'icon_url'  => null,
                     'label'     => $policy,
-                    'id'        => null
+                    'id'        => null,
                 ];
             }
-        } else if ( Str::contains($trimedString, "shop::home.customer-reviews") ) {
+        } elseif (Str::contains($trimedString, 'shop::home.customer-reviews')) {
             $homeContent = [
                 'label'         => trans('velocity::app.home.customer-reviews'),
                 'type'          => 'customer-reviews',
                 'slug'          => 'review',
                 'id'            => null,
-                'custom_data'   => $this->velocityHelper->getShopRecentReviews(4)->toArray()
+                'custom_data'   => $this->velocityHelper->getShopRecentReviews(4)->toArray(),
             ];
-        } else if ( Str::contains($trimedString, "'shop::home.popular-categories'") ) {
+        } elseif (Str::contains($trimedString, "'shop::home.popular-categories'")) {
             $homeContent = [
                 'label' => trans('velocity::app.home.popular-categories'),
                 'type'  => 'popular-categories',
                 'slug'  => 'category',
-                'id'    => null
+                'id'    => null,
             ];
 
             $trimedContent = $this->formatBlade($trimedString, "'shop::home.popular-categories',", "['category'=>[");
-            if ( $trimedContent ) {
-                $slugs = explode(",", str_replace("'", "", $trimedContent[0]));
+            if ($trimedContent) {
+                $slugs = explode(',', str_replace("'", '', $trimedContent[0]));
                 foreach ($slugs as $slug) {
                     $category = $this->categoryRepository->whereTranslation('slug', $slug)->first();
-                    if ( $category ) {
+                    if ($category) {
                         $children = $this->categoryRepository->findByField('parent_id', $category->id);
                         $homeContent['custom_data'][] = [
                             'image_url'  => $category->image_url,
-                            'label'     => $category->name,
-                            'slug'      => $slug,
-                            'id'        => $category->id,
-                            'children'  => $children ? $children->toArray() : []
+                            'label'      => $category->name,
+                            'slug'       => $slug,
+                            'id'         => $category->id,
+                            'children'   => $children ? $children->toArray() : [],
                         ];
                     }
                 }
             }
         }
-        
+
         return $homeContent;
     }
 
@@ -588,15 +592,15 @@ class HomePage extends JsonResource
         $trimedContent = [];
         $matchTemplate = explode($findString, $trimedString);
         $data = array_values(array_filter($matchTemplate));
-        
-        if ( is_array($data) && count($matchTemplate) > 1 ) {
-            if ( $explodingString ) {
-                $trimedContent = array_values(array_filter(explode($explodingString, rtrim($data[0], "]"))));
+
+        if (is_array($data) && count($matchTemplate) > 1) {
+            if ($explodingString) {
+                $trimedContent = array_values(array_filter(explode($explodingString, rtrim($data[0], ']'))));
             } else {
-                $trimedContent = ltrim(rtrim($data[0], "]"), "[");
+                $trimedContent = ltrim(rtrim($data[0], ']'), '[');
             }
         }
-        
+
         return $trimedContent;
     }
 }

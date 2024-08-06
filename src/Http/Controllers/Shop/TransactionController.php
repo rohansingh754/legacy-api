@@ -40,9 +40,9 @@ class TransactionController extends Controller
 
             auth()->setDefaultDriver($this->guard);
 
-            $this->middleware('auth:' . $this->guard);
+            $this->middleware('auth:'.$this->guard);
         }
-        
+
         $this->middleware('validateAPIHeader');
 
         if ($this->_config) {
@@ -57,7 +57,7 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        $query = $this->repository->scopeQuery(function($query) {
+        $query = $this->repository->scopeQuery(function ($query) {
             $query = $query->leftJoin('orders', 'order_transactions.order_id', '=', 'orders.id')->select('order_transactions.*', 'orders.customer_id');
 
             if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
@@ -96,9 +96,9 @@ class TransactionController extends Controller
     {
         if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
             $query = $this->repository->leftJoin('orders', 'order_transactions.order_id', '=', 'orders.id')
-                          ->select('order_transactions.*', 'orders.customer_id')
-                          ->where('customer_id', auth()->user()->id)
-                          ->findOrFail($id);
+                ->select('order_transactions.*', 'orders.customer_id')
+                ->where('customer_id', auth()->user()->id)
+                ->findOrFail($id);
         } else {
             $query = $this->repository->findOrFail($id);
         }

@@ -18,9 +18,10 @@ class Compare extends JsonResource
         $this->productFlatRepository = app('Webkul\Product\Repositories\ProductFlatRepository');
 
         $this->customerRepository = app('Webkul\Customer\Repositories\CustomerRepository');
-        
+
         parent::__construct($resource);
     }
+
     /**
      * Transform the resource into an array.
      *

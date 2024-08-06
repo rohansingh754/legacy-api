@@ -2,7 +2,6 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Illuminate\Http\Request;
 use Webkul\Checkout\Facades\Cart;
 
 class ResourceController extends Controller
@@ -45,7 +44,7 @@ class ResourceController extends Controller
 
             $this->middleware('auth:' . $this->guard);
         }
-        
+
         $this->middleware('validateAPIHeader');
 
         if ($this->_config) {
@@ -60,12 +59,12 @@ class ResourceController extends Controller
      */
     public function index()
     {
-        $query = $this->repository->scopeQuery(function($query) {
+        $query = $this->repository->scopeQuery(function ($query) {
 
             if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
-                $query = $query->where('customer_id', auth()->guard()->user()->id );
+                $query = $query->where('customer_id', auth()->guard()->user()->id);
             }
-            
+
             foreach (request()->except(['page', 'limit', 'pagination', 'sort', 'order', 'token']) as $input => $value) {
                 $query = $query->whereIn($input, array_map('trim', explode(',', $value)));
             }
@@ -100,8 +99,8 @@ class ResourceController extends Controller
     public function get($id)
     {
         $query = isset($this->_config['authorization_required']) && $this->_config['authorization_required'] ?
-                $this->repository->where('customer_id', auth()->user()->id)->findOrFail($id) :
-                $this->repository->findOrFail($id);
+            $this->repository->where('customer_id', auth()->user()->id)->findOrFail($id) :
+            $this->repository->findOrFail($id);
 
         return new $this->_config['resource']($query);
     }

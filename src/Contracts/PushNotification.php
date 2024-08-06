@@ -2,6 +2,4 @@
 
 namespace Webkul\API\Contracts;
 
-interface PushNotification
-{
-}
+interface PushNotification {}

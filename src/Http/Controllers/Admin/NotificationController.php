@@ -2,13 +2,17 @@
 
 namespace Webkul\API\Http\Controllers\Admin;
 
-use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\API\DataGrids\PushNotificationDataGrid;
-use Webkul\API\Repositories\NotificationRepository;
+use Illuminate\Support\Facades\Log;
 use Webkul\API\Helpers\SendNotification;
-use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Core\Repositories\ChannelRepository;
+use Webkul\Admin\Http\Requests\MassUpdateRequest;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\API\DataGrids\PushNotificationDataGrid;
 use Webkul\Product\Repositories\ProductRepository;
+use Webkul\API\Repositories\NotificationRepository;
+use Webkul\Category\Repositories\CategoryRepository;
 
 class NotificationController extends Controller
 {
@@ -21,12 +25,6 @@ class NotificationController extends Controller
 
     /**
      * Create a new controller instance.
-     *
-     * @param \Webkul\API\Repositories\NotificationRepository  $notificationRepository
-     * @param \Webkul\API\Helpers\SendNotification  $sendNotification
-     * @param \Webkul\Core\Repositories\ChannelRepository  $channelRepository
-     * @param \Webkul\Product\Repositories\ProductRepository  $productRepository
-     * @param \Webkul\Category\Repositories\CategoryRepository  $categoryRepository
      */
     public function __construct(
         protected ChannelRepository $channelRepository,
@@ -34,7 +32,7 @@ class NotificationController extends Controller
         protected SendNotification $sendNotification,
         protected CategoryRepository $categoryRepository,
         protected ProductRepository $productRepository
-    )   {
+    ) {
         $this->_config = request('_config');
 
         $this->middleware('admin');
@@ -51,7 +49,7 @@ class NotificationController extends Controller
             return app(PushNotificationDataGrid::class)->toJson();
         }
 
-        return view($this->_config['view']);
+        return view('api::notification.index');
     }
 
     /**
@@ -63,7 +61,7 @@ class NotificationController extends Controller
     {
         $channels = $this->channelRepository->get();
 
-        return view($this->_config['view'], compact('channels'));
+        return view('api::notification.create', compact('channels'));
     }
 
     /**
@@ -79,11 +77,11 @@ class NotificationController extends Controller
             'image.*'   => 'mimes:jpeg,jpg,bmp,png',
             'type'      => 'required',
             'channels'  => 'required',
-            'status'    => 'required'
+            'status'    => 'required',
         ]);
-        
+
         $data = collect(request()->all())->except('_token')->toArray();
-     
+
         $this->notificationRepository->create($data);
 
         session()->flash('success', trans('api::app.alert.create-success', ['name' => 'Notification']));
@@ -103,7 +101,7 @@ class NotificationController extends Controller
 
         $channels = $this->channelRepository->get();
 
-        return view($this->_config['view'], compact('notification', 'channels'));
+        return view('api::notification.edit', compact('notification', 'channels'));
     }
 
     /**
@@ -120,7 +118,7 @@ class NotificationController extends Controller
             'image.*'   => 'mimes:jpeg,jpg,bmp,png',
             'type'      => 'required',
             'channels'  => 'required',
-            'status'    => 'required'
+            'status'    => 'required',
         ]);
 
         $data = collect(request()->all())->except('_token')->toArray();
@@ -144,7 +142,7 @@ class NotificationController extends Controller
             $this->notificationRepository->delete($id);
 
             return response()->json(['message' => trans('api::app.alert.delete-success', ['name' => 'Notification'])], 200);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             session()->flash('success', trans('api::app.alert.delete-failed', ['name' => 'Notification']));
         }
 
@@ -156,22 +154,15 @@ class NotificationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function massUpdate()
+    public function massUpdate(MassUpdateRequest $request): JsonResponse
     {
-        $notificationIds = explode(',', request()->input('indexes'));
-        $updateOption = request()->input('update-options');
+        $this->notificationRepository
+            ->whereIn('id', $request->indices)
+            ->update(['status' => $request->value]);
 
-        foreach ($notificationIds as $notificationId) {
-            $notification = $this->notificationRepository->find($notificationId);
-
-            $notification->update([
-                'status' => $updateOption
-            ]);
-        }
-
-        session()->flash('success', trans('api::app.alert.update-success', ['name' => 'Notification']));
-
-        return redirect()->back();
+        return new JsonResponse([
+            'message' => trans('api::app.alert.update-success', ['name' => 'Notification']),
+        ]);
     }
 
     /**
@@ -179,19 +170,19 @@ class NotificationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function massDestroy()
+    public function massDestroy(MassDestroyRequest $request): JsonResponse
     {
-        $notificationIds = explode(',', request()->input('indexes'));
+        try {
+            $this->notificationRepository->whereIn('id', $request->indices)->delete();
 
-        foreach ($notificationIds as $notificationId) {
-            $this->notificationRepository->deleteWhere([
-                'id' => $notificationId
+            return new JsonResponse([
+                'message' => trans('api::app.alert.delete-success', ['name' => 'Notification']),
             ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'message' => trans('api::app.alert.delete-failed', ['name' => 'Notification']),
+            ], 500);
         }
-
-        session()->flash('success', trans('api::app.alert.delete-success', ['name' => 'Notification']));
-
-        return redirect()->back();
     }
 
     /**
@@ -204,11 +195,11 @@ class NotificationController extends Controller
         $data = $this->notificationRepository->find($id);
 
         $notification = $this->sendNotification->sendGCM($data);
-
+        Log::info($notification);
         if (isset($notification->message_id)) {
             session()->flash('success', trans('api::app.alert.sended-successfully', ['name' => 'Notification']));
-        } elseif (isset($notification->error)) {
-            session()->flash('error', $notification->error);
+        } else {
+            session()->flash('error', trans('api::app.alert.sended-fails', ['name' => 'Notification']));
         }
 
         return redirect()->back();
@@ -223,15 +214,15 @@ class NotificationController extends Controller
     {
         $data = request()->all();
 
-        if ( substr_count($data['givenValue'], ' ') > 0) {
-            return response()->json(['value' => false, 'message' => 'Product not exist', 'type' => $data['selectedType']],200);
+        if (substr_count($data['givenValue'], ' ') > 0) {
+            return response()->json(['value' => false, 'message' => 'Product not exist', 'type' => $data['selectedType']], 200);
         }
 
         //product case
         if ($data['selectedType'] == 'product') {
             if ($product = $this->productRepository->find($data['givenValue'])) {
 
-                if (! isset($product->id) || !isset($product->url_key) || ( isset($product->parent_id) && $product->parent_id) ) {
+                if (!isset($product->id) || !isset($product->url_key) || (isset($product->parent_id) && $product->parent_id)) {
                     return response()->json(['value' => false, 'message' => 'Product not exist', 'type' => 'product'], 200);
                 } else {
                     return response()->json(['value' => true], 200);
@@ -244,9 +235,9 @@ class NotificationController extends Controller
         //category case
         if ($data['selectedType'] == 'category') {
             if ($this->categoryRepository->find($data['givenValue'])) {
-                return response()->json(['value' => true] ,200);
+                return response()->json(['value' => true], 200);
             } else {
-                return response()->json(['value' => false, 'message' => 'Category not exist', 'type' => 'category'] ,200);
+                return response()->json(['value' => false, 'message' => 'Category not exist', 'type' => 'category'], 200);
             }
         }
     }

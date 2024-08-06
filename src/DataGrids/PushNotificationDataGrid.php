@@ -2,11 +2,11 @@
 
 namespace Webkul\API\DataGrids;
 
-use Webkul\Ui\DataGrid\DataGrid;
-use Webkul\Core\Models\Locale;
-use Webkul\Core\Models\Channel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Webkul\Core\Models\Channel;
+use Webkul\Core\Models\Locale;
+use Webkul\DataGrid\DataGrid;
 
 class PushNotificationDataGrid extends DataGrid
 {
@@ -15,14 +15,14 @@ class PushNotificationDataGrid extends DataGrid
      *
      * @var string
      */
-    protected $sortOrder = 'desc';
+    // protected $sortOrder = 'desc';
 
     /**
      * Set index columns, ex: id.
      *
      * @var string
      */
-    protected $index = 'notification_id';
+    // protected $primaryColumn = 'notification_id';
 
     /**
      * If paginated then value of pagination.
@@ -62,6 +62,8 @@ class PushNotificationDataGrid extends DataGrid
      */
     public function __construct()
     {
+        $this->primaryColumn = 'notification_id';
+        // $this->sortColumn = 'notification_id';
         /* locale */
         $this->locale = core()->getRequestedLocaleCode();
 
@@ -69,7 +71,7 @@ class PushNotificationDataGrid extends DataGrid
         $this->channel = core()->getRequestedChannelCode();
 
         /* parent constructor */
-        parent::__construct();
+        // parent::__construct();
 
         /* finding channel code */
         if ($this->channel !== 'all') {
@@ -84,7 +86,7 @@ class PushNotificationDataGrid extends DataGrid
      * @return void
      */
     public function prepareQueryBuilder()
-    {    
+    {
         if ($this->channel === 'all') {
             $whereInChannels = Channel::query()->pluck('code')->toArray();
         } else {
@@ -96,29 +98,29 @@ class PushNotificationDataGrid extends DataGrid
             $whereInLocales = [$this->locale];
         }
         $queryBuilder = DB::table('push_notification_translations as pn_trans')
-                            ->leftJoin('api_notifications as pn', 'pn_trans.push_notification_id', '=', 'pn.id')
-                            ->leftJoin('channels as ch', 'pn_trans.channel', '=', 'ch.code')
-                            ->leftJoin('channel_translations as ch_t', 'ch.id', '=', 'ch_t.channel_id')
-                            ->addSelect(
-                                'pn_trans.push_notification_id as notification_id',
-                                'pn.image as image',
-                                'pn_trans.title as title',
-                                'pn_trans.content as content',
-                                'pn_trans.channel as channel',
-                                'pn_trans.locale as locale',
-                                'pn.type as type',
-                                'pn.product_category_id as ',
-                                'pn.status as status',
-                                'pn.created_at as created_at',
-                                'pn.updated_at as updated_at',
-                                'ch_t.name as channel_name'
-                            );
-        
-            $queryBuilder->groupBy('pn_trans.push_notification_id', 'pn_trans.channel', 'pn_trans.locale');
+            ->leftJoin('api_notifications as pn', 'pn_trans.push_notification_id', '=', 'pn.id')
+            ->leftJoin('channels as ch', 'pn_trans.channel', '=', 'ch.code')
+            ->leftJoin('channel_translations as ch_t', 'ch.id', '=', 'ch_t.channel_id')
+            ->addSelect(
+                'pn_trans.push_notification_id as notification_id',
+                'pn.image as image',
+                'pn_trans.title as title',
+                'pn_trans.content as content',
+                'pn_trans.channel as channel',
+                'pn_trans.locale as locale',
+                'pn.type as type',
+                'pn.product_category_id as ',
+                'pn.status as status',
+                'pn.created_at as created_at',
+                'pn.updated_at as updated_at',
+                'ch_t.name as channel_name'
+            );
 
-            $queryBuilder->whereIn('pn_trans.locale', $whereInLocales);
-            $queryBuilder->whereIn('pn_trans.channel', $whereInChannels);
-            
+        $queryBuilder->groupBy('pn_trans.push_notification_id', 'pn_trans.channel', 'pn_trans.locale');
+
+        $queryBuilder->whereIn('pn_trans.locale', $whereInLocales);
+        $queryBuilder->whereIn('pn_trans.channel', $whereInChannels);
+
         $this->addFilter('notification_id', 'pn_trans.push_notification_id');
         $this->addFilter('title', 'pn_trans.title');
         $this->addFilter('content', 'pn_trans.content');
@@ -127,7 +129,7 @@ class PushNotificationDataGrid extends DataGrid
         $this->addFilter('created_at', 'pn.created_at');
         $this->addFilter('updated_at', 'pn.updated_at');
 
-        $this->setQueryBuilder($queryBuilder);
+        return $queryBuilder;
     }
 
     /**
@@ -135,7 +137,7 @@ class PushNotificationDataGrid extends DataGrid
      *
      * @return void
      */
-    public function addColumns()
+    public function prepareColumns()
     {
         $this->addColumn([
             'index'         => 'notification_id',
@@ -151,13 +153,13 @@ class PushNotificationDataGrid extends DataGrid
             'label'         => trans('api::app.notification.image'),
             'type'          => 'html',
             'searchable'    => false,
+            'filterable'    => true,
             'sortable'      => false,
-            'closure'       => true,
-            'wrapper'       => function($row) {
-                if ( $row->image )
+            'closure'       => function ($row) {
+                if ($row->image) {
                     return '<img src=' . Storage::url($row->image) . ' class="img-thumbnail" width="100px" height="70px" />';
-
-            }
+                }
+            },
         ]);
 
         $this->addColumn([
@@ -170,51 +172,40 @@ class PushNotificationDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'         => 'content',
-            'label'         => trans('api::app.notification.notification-content'),
-            'type'          => 'string',
-            'searchable'    => true,
-            'sortable'      => true,
-            'filterable'    => true
-        ]);
-
-        $this->addColumn([
             'index'         => 'type',
             'label'         => trans('api::app.notification.notification-type'),
             'type'          => 'string',
             'searchable'    => true,
             'sortable'      => true,
             'filterable'    => true,
-            'closure'       => true,
-            'wrapper'       => function($row) {
-                return ucwords(strtolower(str_replace("_", " ", $row->type)));
-            }
+            'closure'       => function ($row) {
+                return ucwords(strtolower(str_replace('_', ' ', $row->type)));
+            },
         ]);
 
         $this->addColumn([
             'index'         => 'channel_name',
-            'label'         =>  trans('api::app.notification.store-view'),
+            'label'         => trans('api::app.notification.store-view'),
             'type'          => 'string',
             'searchable'    => false,
             'sortable'      => false,
             'filterable'    => false,
-            'closure'       => true,
-            'wrapper'       => function($row) {
+            'closure'       => function ($row) {
                 $channelNames = '';
                 $notificationTranslations = DB::table('push_notification_translations')->where(['push_notification_id' => $row->notification_id])->groupBy('push_notification_id', 'channel')->pluck('channel')->toArray();
 
                 if ($notificationTranslations) {
                     $channels = app('Webkul\Core\Repositories\ChannelRepository')->whereIn('code', $notificationTranslations)->get();
-                    
+
                     foreach ($channels as $key => $channel) {
-                        if ( $channel ) {
+                        if ($channel) {
                             $channelNames .= $channel->name . '</br>' . PHP_EOL;
-                        }   
-                    } 
+                        }
+                    }
                 }
 
                 return $channelNames;
-            }
+            },
         ]);
 
         $this->addColumn([
@@ -224,31 +215,22 @@ class PushNotificationDataGrid extends DataGrid
             'searchable'    => true,
             'sortable'      => true,
             'filterable'    => true,
-            'closure'       => true,
-            'wrapper'       => function($row) {
-                if ( $row->status == 1 )
-                    return '<span class="badge badge-md badge-success">' . trans('api::app.notification.status.enabled') . '</span>';
-                else
-                    return '<span class="badge badge-md badge-danger">' . trans('api::app.notification.status.disabled') . '</span>';
-            }
+            'closure'       => function ($row) {
+                if ($row->status == 1) {
+                    return '<p class="label-active">' . trans('api::app.datagride.active') . '</p>';
+                } else {
+                    return '<p class="label-canceled">' . trans('api::app.datagride.inactive') . '</p>';
+                }
+            },
         ]);
 
         $this->addColumn([
             'index'         => 'created_at',
-            'label'         =>  trans('api::app.notification.created'),
+            'label'         => trans('api::app.notification.created'),
             'type'          => 'datetime',
             'searchable'    => true,
             'sortable'      => true,
-            'filterable'    => true
-        ]);
-
-        $this->addColumn([
-            'index'         => 'updated_at',
-            'label'         => trans('api::app.notification.modified'),
-            'type'          => 'datetime',
-            'searchable'    => true,
-            'sortable'      => true,
-            'filterable'    => true
+            'filterable'    => true,
         ]);
     }
 
@@ -260,20 +242,30 @@ class PushNotificationDataGrid extends DataGrid
     public function prepareActions()
     {
         $this->addAction([
+            'icon'      => 'icon-edit',
             'title'     => trans('admin::app.datagrid.edit'),
-            'method'    => 'GET', //use post only for redirects only
-            'route'     => 'api.notification.edit',
-            'icon'      => 'icon pencil-lg-icon',
-            'condition' => function () {
-                return true;
+            'method'    => 'GET',
+            'url'       => function ($row) {
+                return route('api.notification.edit', $row->notification_id);
             },
         ]);
 
         $this->addAction([
+            'icon'      => 'icon-delete',
             'title'     => trans('admin::app.datagrid.delete'),
-            'method'    => 'POST', // use GET request only for redirect purposes
-            'route'     => 'api.notification.delete',
-            'icon'      => 'icon trash-icon',
+            'method'    => 'POST',
+            'url'       => function ($row) {
+                return route('api.notification.delete', $row->notification_id);
+            },
+        ]);
+
+        $this->addAction([
+            'icon'      => 'icon-edit',
+            'title'     => trans('admin::app.datagrid.delete'),
+            'method'    => 'get',
+            'url'       => function ($row) {
+                return route('api.notification.send-notification', $row->notification_id);
+            },
         ]);
     }
 
@@ -285,21 +277,25 @@ class PushNotificationDataGrid extends DataGrid
     public function prepareMassActions()
     {
         $this->addMassAction([
-            'type'      => 'delete',
-            'label'     => trans('admin::app.datagrid.delete'),
-            'action'    => route('api.notification.mass-delete'),
+            'title'     => trans('api::app.datagride.delete'),
+            'url'       => route('api.notification.mass-delete'),
             'method'    => 'POST',
         ]);
 
         $this->addMassAction([
-            'type'      => 'update',
-            'label'     => trans('admin::app.datagrid.update-status'),
-            'action'    => route('api.notification.mass-update'),
+            'title'     => trans('api::app.datagride.update-status'),
+            'url'       => route('api.notification.mass-update'),
             'method'    => 'POST',
             'options'   => [
-                trans('admin::app.datagrid.active')     => 1,
-                trans('admin::app.datagrid.inactive')   => 0
-            ]
+                [
+                    'label' => trans('api::app.datagride.active'),
+                    'value' => 1,
+                ],
+                [
+                    'label' => trans('api::app.datagride.inactive'),
+                    'value' => 0,
+                ],
+            ],
         ]);
     }
 }

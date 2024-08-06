@@ -5,16 +5,16 @@ namespace Webkul\API\Http\Controllers\Shop;
 use Cart;
 use Exception;
 use Illuminate\Support\Str;
-use Webkul\Payment\Facades\Payment;
-use Webkul\Shipping\Facades\Shipping;
-use Webkul\Sales\Repositories\OrderRepository;
-use Webkul\Checkout\Repositories\CartRepository;
-use Webkul\Shop\Http\Controllers\OnepageController;
-use Webkul\Checkout\Repositories\CartItemRepository;
-use Webkul\Checkout\Http\Requests\CustomerAddressForm;
-use Webkul\API\Http\Resources\Sales\Order as OrderResource;
 use Webkul\API\Http\Resources\Checkout\Cart as CartResource;
 use Webkul\API\Http\Resources\Checkout\CartShippingRate as CartShippingRateResource;
+use Webkul\API\Http\Resources\Sales\Order as OrderResource;
+use Webkul\Checkout\Http\Requests\CustomerAddressForm;
+use Webkul\Checkout\Repositories\CartItemRepository;
+use Webkul\Checkout\Repositories\CartRepository;
+use Webkul\Payment\Facades\Payment;
+use Webkul\Sales\Repositories\OrderRepository;
+use Webkul\Shipping\Facades\Shipping;
+use Webkul\Shop\Http\Controllers\OnepageController;
 
 class CheckoutController extends Controller
 {
@@ -27,23 +27,18 @@ class CheckoutController extends Controller
 
     /**
      * Controller instance
-     *
-     * @param  \Webkul\Checkout\Repositories\CartRepository  $cartRepository
-     * @param  \Webkul\Checkout\Repositories\CartItemRepository  $cartItemRepository
-     * @param  \Webkul\Sales\Repositories\OrderRepository  $orderRepository
      */
     public function __construct(
         protected CartRepository $cartRepository,
         protected CartItemRepository $cartItemRepository,
         protected OrderRepository $orderRepository
-    )
-    {
+    ) {
         $this->guard = request()->has('token') ? 'api' : 'customer';
 
         auth()->setDefaultDriver($this->guard);
 
         // $this->middleware('auth:' . $this->guard);
-        
+
         $this->middleware('validateAPIHeader');
 
         $this->_config = request('_config');
@@ -52,9 +47,8 @@ class CheckoutController extends Controller
     /**
      * Saves customer address.
      *
-     * @param  \Webkul\Checkout\Http\Requests\CustomerAddressForm $request
      * @return \Illuminate\Http\Response
-    */
+     */
     public function saveAddress(CustomerAddressForm $request)
     {
         $data = request()->all();
@@ -72,7 +66,6 @@ class CheckoutController extends Controller
             unset($data['shipping']['id']);
             unset($data['shipping']['address_id']);
         }
-
 
         if (Cart::hasError() || ! Cart::saveCustomerAddress($data) || ! Shipping::collectRates()) {
             abort(400);
@@ -93,7 +86,7 @@ class CheckoutController extends Controller
             'data' => [
                 'rates' => $rates,
                 'cart'  => new CartResource(Cart::getCart()),
-            ]
+            ],
         ]);
     }
 
@@ -101,13 +94,13 @@ class CheckoutController extends Controller
      * Saves shipping method.
      *
      * @return \Illuminate\Http\Response
-    */
+     */
     public function saveShipping()
     {
         $shippingMethod = request()->get('shipping_method');
 
         if (Cart::hasError()
-            || !$shippingMethod
+            || ! $shippingMethod
             || ! Cart::saveShippingMethod($shippingMethod)
         ) {
             abort(400);
@@ -119,7 +112,7 @@ class CheckoutController extends Controller
             'data' => [
                 'methods' => Payment::getPaymentMethods(),
                 'cart'    => new CartResource(Cart::getCart()),
-            ]
+            ],
         ]);
     }
 
@@ -127,7 +120,7 @@ class CheckoutController extends Controller
      * Saves payment method.
      *
      * @return \Illuminate\Http\Response
-    */
+     */
     public function savePayment()
     {
         $payment = request()->get('payment');
@@ -139,7 +132,7 @@ class CheckoutController extends Controller
         return response()->json([
             'data' => [
                 'cart' => new CartResource(Cart::getCart()),
-            ]
+            ],
         ]);
     }
 
@@ -155,11 +148,11 @@ class CheckoutController extends Controller
         $status = Cart::checkMinimumOrder();
 
         return response()->json([
-            'status' => ! $status ? false : true,
+            'status'  => ! $status ? false : true,
             'message' => ! $status ? trans('shop::app.checkout.cart.minimum-order-message', ['amount' => core()->currency($minimumOrderAmount)]) : 'Success',
-            'data' => [
+            'data'    => [
                 'cart'   => new CartResource(Cart::getCart()),
-            ]
+            ],
         ]);
     }
 
@@ -167,7 +160,7 @@ class CheckoutController extends Controller
      * Saves order.
      *
      * @return \Illuminate\Http\Response
-    */
+     */
     public function saveOrder()
     {
         if (Cart::hasError()) {
@@ -181,7 +174,7 @@ class CheckoutController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success'   => false,
-                'message'   => $e->getMessage()
+                'message'   => $e->getMessage(),
             ]);
         }
 
@@ -189,9 +182,9 @@ class CheckoutController extends Controller
 
         if ($redirectUrl = Payment::getRedirectUrl($cart)) {
             return response()->json([
-                    'success'      => true,
-                    'redirect_url' => $redirectUrl,
-                ]);
+                'success'      => true,
+                'redirect_url' => $redirectUrl,
+            ]);
         }
 
         $order = $this->orderRepository->create(Cart::prepareDataForOrder());

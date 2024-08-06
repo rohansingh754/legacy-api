@@ -4,11 +4,11 @@ namespace Webkul\API\Http\Controllers\Shop;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
+use Webkul\API\Http\Resources\Customer\Customer as CustomerResource;
 use Webkul\Customer\Http\Requests\CustomerRegistrationRequest;
 use Webkul\Customer\Repositories\CustomerGroupRepository;
 use Webkul\Customer\Repositories\CustomerRepository;
-use Webkul\API\Http\Resources\Customer\Customer as CustomerResource;
-use Illuminate\Support\Facades\Hash;
 
 class CustomerController extends Controller
 {
@@ -29,14 +29,12 @@ class CustomerController extends Controller
     /**
      * Create a new controller instance.
      *
-     * @param  \Webkul\Customer\Repositories\CustomerRepository  $customerRepository
-     * @param  \Webkul\Customer\Repositories\CustomerGroupRepository  $customerGroupRepository
      * @return void
      */
     public function __construct(
         protected CustomerRepository $customerRepository,
         protected CustomerGroupRepository $customerGroupRepository
-    )   {
+    ) {
         $this->guard = request()->has('token') ? 'api' : 'customer';
 
         $this->_config = request('_config');
@@ -45,9 +43,9 @@ class CustomerController extends Controller
 
             auth()->setDefaultDriver($this->guard);
 
-            $this->middleware('auth:' . $this->guard);
+            $this->middleware('auth:'.$this->guard);
         }
-        
+
         $this->middleware('validateAPIHeader');
     }
 
@@ -61,14 +59,14 @@ class CustomerController extends Controller
         $request->validated();
 
         $data = [
-            'first_name'  => $request->get('first_name'),
-            'last_name'   => $request->get('last_name'),
-            'email'       => $request->get('email'),
-            'password'    => $request->get('password'),
-            'password'    => bcrypt($request->get('password')),
-            'channel_id'  => core()->getCurrentChannel()->id,
-            'is_verified' => 1,
-            'customer_group_id' => $this->customerGroupRepository->findOneWhere(['code' => 'general'])->id
+            'first_name'        => $request->get('first_name'),
+            'last_name'         => $request->get('last_name'),
+            'email'             => $request->get('email'),
+            'password'          => $request->get('password'),
+            'password'          => bcrypt($request->get('password')),
+            'channel_id'        => core()->getCurrentChannel()->id,
+            'is_verified'       => 1,
+            'customer_group_id' => $this->customerGroupRepository->findOneWhere(['code' => 'general'])->id,
         ];
 
         Event::dispatch('customer.registration.before');
@@ -76,8 +74,8 @@ class CustomerController extends Controller
         $customer = $this->customerRepository->create($data);
 
         Event::dispatch('customer.registration.after', $customer);
-        
-        if ( core()->getConfigData('general.api.customer.login_after_register') ) {
+
+        if (core()->getConfigData('general.api.customer.login_after_register')) {
             $jwtToken = null;
 
             if (! $jwtToken = auth()->guard($this->guard)->attempt($request->only(['email', 'password']))) {
@@ -94,7 +92,7 @@ class CustomerController extends Controller
                 'data'    => new CustomerResource($customer),
             ]);
         } else {
-            
+
             return response()->json([
                 'message' => 'Your account has been created successfully.',
             ]);
@@ -135,25 +133,25 @@ class CustomerController extends Controller
 
         $data = request()->all();
 
-        if (!$customer) {
+        if (! $customer) {
             return response()->json([
                 'success' => false,
                 'message' => 'Warning: You need to login first to remove account.',
             ]);
         }
 
-        if ( Hash::check($data['password'], $customer->password)) {
-            
+        if (Hash::check($data['password'], $customer->password)) {
+
             if ($this->customerRepository->delete($customer->id)) {
                 return response()->json([
                     'success'   => true,
-                    'message'   => 'Success: Your account has been deleted successfully.'
+                    'message'   => 'Success: Your account has been deleted successfully.',
                 ]);
             }
         } else {
             return response()->json([
                 'success'   => false,
-                'message'   => 'Warning: You provided wrong current password.'
+                'message'   => 'Warning: You provided wrong current password.',
             ]);
         }
     }

@@ -2,9 +2,8 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Illuminate\Http\Request;
-use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\API\Http\Resources\Catalog\Category as CategoryResource;
+use Webkul\Category\Repositories\CategoryRepository;
 
 class CategoryController extends Controller
 {

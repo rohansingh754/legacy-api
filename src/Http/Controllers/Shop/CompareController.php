@@ -2,32 +2,26 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Webkul\Velocity\Repositories\VelocityCustomerCompareProductRepository as CompareRepository;
-use Webkul\Product\Repositories\ProductFlatRepository;
 use Webkul\Core\Repositories\ChannelRepository;
+use Webkul\Product\Repositories\ProductFlatRepository;
+use Webkul\Velocity\Repositories\VelocityCustomerCompareProductRepository as CompareRepository;
 
 class CompareController extends Controller
 {
-    /**
-     * @param  \Webkul\Velocity\Repositories\VelocityCustomerCompareProductRepository  $compareRepository
-     * @param  \Webkul\Product\Repositories\ProductFlatRepository   $productFlatRepository
-     * @param  \Webkul\Core\Repositories\ChannelRepository   $channelRepository
-     */
     public function __construct(
         protected CompareRepository $compareRepository,
         protected ProductFlatRepository $productFlatRepository,
         protected ChannelRepository $channelRepository
-    )
-    {
+    ) {
         $this->guard = request()->has('token') ? 'api' : 'customer';
 
         if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
 
             auth()->setDefaultDriver($this->guard);
 
-            $this->middleware('auth:' . $this->guard);
+            $this->middleware('auth:'.$this->guard);
         }
-        
+
         $this->middleware('validateAPIHeader');
     }
 
@@ -47,23 +41,23 @@ class CompareController extends Controller
         if (! $customer) {
             return response()->json([
                 'success'   => false,
-                'message'   => trans('admin::app.api.auth.login-required')
+                'message'   => trans('admin::app.api.auth.login-required'),
             ], 400);
         }
-        
+
         $productFlat = $this->productFlatRepository->findOneWhere([
             'channel'       => $channel->code,
             'locale'        => $locale,
             'product_id'    => $id,
         ]);
 
-        if ( $productFlat ) {
+        if ($productFlat) {
             $compareProduct = $this->compareRepository->findOneByField([
                 'customer_id'     => $customer->id,
                 'product_flat_id' => $productFlat->id,
             ]);
 
-            if ( $compareProduct ) {
+            if ($compareProduct) {
                 return response()->json([
                     'success'   => true,
                     'message'   => trans('velocity::app.customer.compare.already_added'),
@@ -72,7 +66,7 @@ class CompareController extends Controller
 
             $this->compareRepository->create([
                 'customer_id'     => $customer->id,
-                'product_flat_id' => $productFlat->id
+                'product_flat_id' => $productFlat->id,
             ]);
 
             return response()->json([

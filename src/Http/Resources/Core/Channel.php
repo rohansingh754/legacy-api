@@ -3,9 +3,9 @@
 namespace Webkul\API\Http\Resources\Core;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Webkul\API\Http\Resources\Core\Locale as LocaleResource;
-use Webkul\API\Http\Resources\Core\Currency as CurrencyResource;
 use Webkul\API\Http\Resources\Catalog\Category as CategoryResource;
+use Webkul\API\Http\Resources\Core\Currency as CurrencyResource;
+use Webkul\API\Http\Resources\Core\Locale as LocaleResource;
 
 class Channel extends JsonResource
 {

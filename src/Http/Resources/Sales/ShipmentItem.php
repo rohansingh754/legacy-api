@@ -31,7 +31,7 @@ class ShipmentItem extends JsonResource
             'formated_base_total' => core()->formatBasePrice($this->base_total),
             'additional'          => is_array($this->resource->additional)
                                      ? $this->resource->additional
-                                     : json_decode($this->resource->additional, true)
+                                     : json_decode($this->resource->additional, true),
         ];
     }
 }

@@ -11,7 +11,6 @@ class OrderItem extends JsonResource
      * Transform the resource into an array.
      *
      * @param \Illuminate\Http\Request
-     *
      * @return array
      */
     public function toArray($request)
@@ -81,7 +80,7 @@ class OrderItem extends JsonResource
                                                     ? $this->resource->additional
                                                     : json_decode($this->resource->additional, true),
             'child'                             => new self($this->child),
-            'children'                          => Self::collection($this->children)
+            'children'                          => self::collection($this->children),
         ];
     }
 }

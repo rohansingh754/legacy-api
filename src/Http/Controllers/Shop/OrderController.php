@@ -39,9 +39,9 @@ class OrderController extends Controller
         if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
             auth()->setDefaultDriver($this->guard);
 
-            $this->middleware('auth:' . $this->guard);
+            $this->middleware('auth:'.$this->guard);
         }
-        
+
         $this->middleware('validateAPIHeader');
 
         if ($this->_config) {
@@ -62,7 +62,7 @@ class OrderController extends Controller
             return response()->json([
                 'status'  => true,
                 'message' => __('admin::app.response.cancel-success', [
-                    'name' => 'Order'
+                    'name' => 'Order',
                 ]),
             ]);
         }

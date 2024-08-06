@@ -2,8 +2,8 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Webkul\Customer\Repositories\CustomerAddressRepository;
 use Webkul\API\Http\Resources\Customer\CustomerAddress as CustomerAddressResource;
+use Webkul\Customer\Repositories\CustomerAddressRepository;
 
 class AddressController extends Controller
 {
@@ -23,8 +23,6 @@ class AddressController extends Controller
 
     /**
      * Controller instance
-     *
-     * @param CustomerAddressRepository $customerAddressRepository
      */
     public function __construct(protected CustomerAddressRepository $customerAddressRepository)
     {
@@ -32,8 +30,8 @@ class AddressController extends Controller
 
         auth()->setDefaultDriver($this->guard);
 
-        $this->middleware('auth:' . $this->guard);
-        
+        $this->middleware('auth:'.$this->guard);
+
         $this->middleware('validateAPIHeader');
 
         $this->_config = request('_config');
@@ -57,6 +55,7 @@ class AddressController extends Controller
      * Store a newly created resource in storage.
      *
      * @return \Illuminate\Http\JsonResponse
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store()
@@ -71,20 +70,20 @@ class AddressController extends Controller
 
         if (request()->input('address1')) {
             request()->merge([
-                'address1' => implode(PHP_EOL, array_filter(request()->input('address1'))),
+                'address1'    => implode(PHP_EOL, array_filter(request()->input('address1'))),
                 'customer_id' => $customer->id,
             ]);
         }
 
         $this->validate(request(), [
             'address1' => 'string|required',
-            'company' => 'string|nullable',
-            'vat_id' => 'string|nullable',
-            'country' => 'string|required',
-            'state' => 'string|nullable',
-            'city' => 'string|required',
+            'company'  => 'string|nullable',
+            'vat_id'   => 'string|nullable',
+            'country'  => 'string|required',
+            'state'    => 'string|nullable',
+            'city'     => 'string|required',
             'postcode' => 'required',
-            'phone' => 'required',
+            'phone'    => 'required',
         ]);
 
         $customerAddress = $this->customerAddressRepository->create(request()->all());
@@ -97,9 +96,9 @@ class AddressController extends Controller
 
     /**
      * Update the specified resource in storage.
-     * @param int $id
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function update(int $id)
@@ -114,13 +113,13 @@ class AddressController extends Controller
 
         $this->validate(request(), [
             'address1' => 'string|required',
-            'company' => 'string|nullable',
-            'vat_id' => 'string|nullable',
-            'country' => 'string|required',
-            'state' => 'string|nullable',
-            'city' => 'string|required',
+            'company'  => 'string|nullable',
+            'vat_id'   => 'string|nullable',
+            'country'  => 'string|required',
+            'state'    => 'string|nullable',
+            'city'     => 'string|required',
             'postcode' => 'required',
-            'phone' => 'required',
+            'phone'    => 'required',
         ]);
 
         $customerAddress = $this->customerAddressRepository->update(request()->all(), $id);

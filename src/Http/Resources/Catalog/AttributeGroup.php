@@ -19,7 +19,7 @@ class AttributeGroup extends JsonResource
             'code'        => $this->code,
             'name'        => $this->name,
             'swatch_type' => $this->swatch_type,
-            'attributes'  => Attribute::collection($this->custom_attributes)
+            'attributes'  => Attribute::collection($this->custom_attributes),
         ];
     }
 }

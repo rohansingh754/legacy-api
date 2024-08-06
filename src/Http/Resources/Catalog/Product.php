@@ -17,9 +17,9 @@ class Product extends JsonResource
         $this->productReviewHelper = app('Webkul\Product\Helpers\Review');
 
         $this->wishlistHelper = app('Webkul\Customer\Helpers\Wishlist');
-        
+
         $this->productViewHelper = app('Webkul\Product\Helpers\View');
-        
+
         parent::__construct($resource);
     }
 
@@ -186,20 +186,20 @@ class Product extends JsonResource
     private function getGroupedProductInfo($product)
     {
         return [
-            'grouped_products' => $product->grouped_products->map(function($groupedProduct) {
+            'grouped_products' => $product->grouped_products->map(function ($groupedProduct) {
                 $associatedProduct = $groupedProduct->associated_product;
 
                 $data = $associatedProduct->toArray();
 
                 return array_merge($data, [
-                    'qty'                   => $groupedProduct->qty,
-                    'isSaleable'            => $associatedProduct->getTypeInstance()->isSaleable(),
-                    'formated_price'        => core()->currency($associatedProduct->getTypeInstance()->evaluatePrice($data['price'])),
-                    'formated_price_html'   => $associatedProduct->getTypeInstance()->getPriceHtml(),
+                    'qty'                    => $groupedProduct->qty,
+                    'isSaleable'             => $associatedProduct->getTypeInstance()->isSaleable(),
+                    'formated_price'         => core()->currency($associatedProduct->getTypeInstance()->evaluatePrice($data['price'])),
+                    'formated_price_html'    => $associatedProduct->getTypeInstance()->getPriceHtml(),
                     'formated_special_price' => $associatedProduct->getTypeInstance()->haveSpecialPrice() ? core()->currency($associatedProduct->getTypeInstance()->evaluatePrice($associatedProduct->getTypeInstance()->getSpecialPrice())) : 0,
-                    'show_quantity_changer' => $associatedProduct->getTypeInstance()->showQuantityBox(),
+                    'show_quantity_changer'  => $associatedProduct->getTypeInstance()->showQuantityBox(),
                 ]);
-            })
+            }),
         ];
     }
 
@@ -213,7 +213,7 @@ class Product extends JsonResource
     {
         return [
             'currency_options' => core()->getAccountJsSymbols(),
-            'bundle_options' => app('Webkul\Product\Helpers\BundleOption')->getBundleConfig($product)
+            'bundle_options'   => app('Webkul\Product\Helpers\BundleOption')->getBundleConfig($product),
         ];
     }
 
@@ -230,16 +230,16 @@ class Product extends JsonResource
         foreach ($product->variants as $key => $variant) {
             $super_attribute_map = [];
             foreach ($super_attribute_codes as $attribute_code) {
-                if ( isset($variant[$attribute_code]) ) {
+                if (isset($variant[$attribute_code])) {
                     $super_attribute_map[$attribute_code] = $variant[$attribute_code];
                 }
             }
 
             $product->variants[$key]['map'] = $super_attribute_map;
         }
-        
+
         return [
-            'variants' => $product->variants
+            'variants' => $product->variants,
         ];
     }
 
@@ -267,8 +267,9 @@ class Product extends JsonResource
                 $sample = $downloadableSample->toArray();
                 $data = $sample;
                 $data['download_url'] = route('shop.downloadable.download_sample', ['type' => 'sample', 'id' => $sample['id']]);
+
                 return $data;
-            })
+            }),
         ];
     }
 

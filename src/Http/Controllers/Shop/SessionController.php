@@ -3,8 +3,6 @@
 namespace Webkul\API\Http\Controllers\Shop;
 
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Log;
 use Webkul\API\Http\Resources\Customer\Customer as CustomerResource;
 use Webkul\Customer\Http\Requests\CustomerLoginRequest;
 use Webkul\Customer\Repositories\CustomerRepository;
@@ -27,14 +25,12 @@ class SessionController extends Controller
 
     /**
      * Controller instance
-     *
-     * @param  \Webkul\Customer\Repositories\CustomerRepository  $customerRepository
      */
     public function __construct(
         protected CustomerRepository $customerRepository)
     {
         $this->guard = request()->has('token') ? 'api' : 'customer';
-        
+
         auth()->setDefaultDriver($this->guard);
 
         // $this->middleware('auth:' . $this->guard, ['only' => ['get', 'update', 'destroy']]);
@@ -52,7 +48,7 @@ class SessionController extends Controller
     public function create(CustomerLoginRequest $request)
     {
         $request->validated();
-        
+
         $jwtToken = 0;
 
         if (! $jwtToken = auth()->guard($this->guard)->attempt($request->only(['email', 'password']))) {
@@ -63,6 +59,7 @@ class SessionController extends Controller
         }
 
         $customer = auth($this->guard)->user();
+
         return response()->json([
             'message'  => 'Logged in successfully.',
             'data'     => array_merge((new CustomerResource($customer))->toArray(request()), ['token' => $jwtToken]),
@@ -75,7 +72,7 @@ class SessionController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function get()
-    { 
+    {
         $customer = null;
 
         if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
@@ -101,7 +98,7 @@ class SessionController extends Controller
             'last_name'             => 'required',
             'gender'                => 'required',
             'date_of_birth'         => 'nullable|date|before:today',
-            'email'                 => 'email|unique:customers,email,' . $customer->id,
+            'email'                 => 'email|unique:customers,email,'.$customer->id,
             'password'              => 'confirmed|min:6|required_with:oldpassword',
             'oldpassword'           => 'required_with:password',
             'password_confirmation' => 'required_with:password',
@@ -109,9 +106,9 @@ class SessionController extends Controller
 
         $data = request()->only('first_name', 'last_name', 'gender', 'date_of_birth', 'phone', 'email', 'oldpassword', 'password');
 
-        if ( isset($data['oldpassword']) ) {
+        if (isset($data['oldpassword'])) {
             if ($data['oldpassword'] != '' || $data['oldpassword'] != null) {
-                if ( Hash::check($data['oldpassword'], $customer->password) ) {
+                if (Hash::check($data['oldpassword'], $customer->password)) {
                     $data['password'] = bcrypt($data['password']);
                 } else {
                     return response()->json([

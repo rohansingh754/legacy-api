@@ -2,18 +2,15 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Webkul\API\Http\Resources\Catalog\Product as ProductResource;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Product\Repositories\ProductRepository;
-use Webkul\API\Http\Resources\Catalog\Product as ProductResource;
 
 class ProductController extends Controller
 {
     /**
      * Create a new controller instance.
      *
-     * @param  \Webkul\Product\Repositories\ProductRepository $productRepository
      * @return void
      */
     public function __construct(protected ProductRepository $productRepository)
@@ -21,7 +18,7 @@ class ProductController extends Controller
         $this->guard = request()->has('token') ? 'api' : 'customer';
 
         auth()->setDefaultDriver($this->guard);
-        
+
         $this->middleware('validateAPIHeader');
     }
 
@@ -33,7 +30,7 @@ class ProductController extends Controller
     public function index()
     {
         return response()->json([
-            'data' => ProductResource::collection($this->productRepository->getAll(request()->input('category_id'))),
+            'data'      => ProductResource::collection($this->productRepository->getAll(request()->input('category_id'))),
             'cartCount' => Cart::getCart() ? count(Cart::getCart()->items) : 0,
         ]);
     }

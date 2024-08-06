@@ -1,242 +1,342 @@
-@extends('admin::layouts.content')
+<x-admin::layouts>
+    <!-- Title of the page -->
+    <x-slot:title>
+        @lang('api::app.notification.edit-notification')
+    </x-slot>
 
-@section('page_title')
-    {{ __('api::app.notification.edit-notification') }}
-@stop
+    {!! view_render_event('bagisto.admin.settings.notification.edit.before', ['notification' => $notification]) !!}
 
-@section('content')
-    <div class="content">
-        @php
-            $locale = request()->get('locale') ?: app()->getLocale();
-            $channel = request()->get('channel') ?: core()->getDefaultChannelCode();
+    @php
+        $locale = request()->get('locale') ?: app()->getLocale();
+        $channel = request()->get('channel') ?: core()->getDefaultChannelCode();
 
-            $channelLocales = app('Webkul\Core\Repositories\ChannelRepository')->findOneByField('code', $channel)->locales;
+        $channelLocales = app('Webkul\Core\Repositories\ChannelRepository')->findOneByField('code', $channel)->locales;
 
-            if (! $channelLocales->contains('code', $locale)) {
-                $locale = config('app.fallback_locale');
-            }
-            
-            $notificationTranslation = $notification->translations->where('channel', $channel)->where('locale', $locale)->first();
-        @endphp
-        <form method="POST" action="" @submit.prevent="onSubmit" enctype="multipart/form-data">
+        if (! $channelLocales->contains('code', $locale)) {
+            $locale = config('app.fallback_locale');
+        }
 
-            <div class="page-header">
-                <div class="page-title">
-                    <h1>
-                        <i class="icon angle-left-icon back-link" onclick="window.location = '{{ route('api.notification.index') }}'"></i>
+        $notificationTranslation = $notification->translations->where('channel', $channel)->where('locale', $locale)->first();
 
-                        {{ __('api::app.notification.edit-notification') }}
-                    </h1>
+    @endphp
 
-                    <div class="control-group">
-                        <select class="control" id="channel-switcher" name="channel">
-                            @foreach (core()->getAllChannels() as $channelModel)
+    <x-admin::form
+        method="POST"
+        :action="route('api.notification.update', $notification->id)"
+        enctype="multipart/form-data"
+    >
+        {!! view_render_event('bagisto.admin.settings.notification.edit.create_form_controls.before', ['notification' => $notification]) !!}
+
+        <div class="flex gap-4 justify-between items-center max-sm:flex-wrap">
+            <p class="text-xl text-gray-800 dark:text-white font-bold">
+                @lang('api::app.notification.edit-notification')
+            </p>
+
+            <div class="flex gap-x-2.5 items-center">
+                <a
+                    href="{{ route('api.notification.index') }}"
+                    class="transparent-button hover:bg-gray-200 dark:hover:bg-gray-800 dark:text-white"
+                >
+                    @lang('api::app.notification.action.back')
+                </a>
+
+                <a
+                    href="{{ route('api.notification.send-notification', $notification['id']) }}"
+                    class="primary-button"
+                >
+                    @lang('api::app.notification.title')
+                </a>
+
+                <!-- Save Button -->
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    @lang('api::app.notification.create-btn-title')
+                </button>
+            </div>
+        </div>
+
+        <!-- Full Pannel -->
+        <div class="flex gap-2.5 mt-3.5 max-xl:flex-wrap">
+
+            <!-- Left Section -->
+            <div class="flex flex-col gap-2 flex-1 max-xl:flex-auto">
+
+                {!! view_render_event('bagisto.admin.settings.notification.edit.card.general.before', ['notification' => $notification]) !!}
+
+                <!-- General -->
+                <div class="p-4 bg-white dark:bg-gray-900 rounded box-shadow">
+                    <p class="mb-4 text-base text-gray-800 dark:text-white font-semibold">
+                        @lang('api::app.notification.sub-title')
+                    </p>
+                    <input
+                        name="_method"
+                        type="hidden"
+                        value="PUT"
+                    >
+                    <input
+                        type="hidden"
+                        value="{{ $notification['id'] }}"
+                        name="notification_id"
+                    />
+
+                    <!-- Title -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('api::app.notification.notification-title')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            name="title"
+                            rules="required"
+                            :value="old('title') ?: $notificationTranslation->title"
+                            :label="trans('api::app.notification.notification-title')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="title" />
+                    </x-admin::form.control-group>
+
+                    <!-- Description -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('api::app.notification.notification-content')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="textarea"
+                            id="content"
+                            class="description"
+                            rules="required"
+                            name="content"
+                            :value="old('content') ?: $notificationTranslation->content"
+                            :label="trans('api::app.notification.notification-content')"
+                            :tinymce="true"
+                        />
+
+                        <x-admin::form.control-group.error control-name="content" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('api::app.notification.store-view')
+                        </x-admin::form.control-group.label>
+
+                        @php
+                            $selectedValue = old('display_mode') ?? $notification->notificationChannelsArray();
+                        @endphp
+
+                        <x-admin::form.control-group.control
+                            type="multiselect"
+                            id="channels"
+                            class="cursor-pointer"
+                            name="channels[]"
+                            rules="required"
+                            :value="old('channels')"
+                            :label="trans('api::app.notification.store-view')"
+                        >
+                            @foreach ($channels as $channel)
 
                                 <option
-                                    value="{{ $channelModel->code }}" {{ ($channelModel->code) == $channel ? 'selected' : '' }}>
-                                    {{ core()->getChannelName($channelModel) }}
+                                    value="{{ $channel->code }}"
+                                    {{ in_array($channel->code, $selectedValue) ? 'selected' : ''}}
+                                >
+                                    {{ $channel->name }}
                                 </option>
-
                             @endforeach
-                        </select>
-                    </div>
+                        </x-admin::form.control-group.control>
 
-                    <div class="control-group">
-                        <select class="control" id="locale-switcher" name="locale">
-                            @foreach ($channelLocales as $localeModel)
+                        <x-admin::form.control-group.error control-name="channels[]" />
+                    </x-admin::form.control-group>
 
-                                <option
-                                    value="{{ $localeModel->code }}" {{ ($localeModel->code) == $locale ? 'selected' : '' }}>
-                                    {{ $localeModel->name }}
-                                </option>
-
-                            @endforeach
-                        </select>
-                    </div>
                 </div>
-                <div class="page-action" style="margin-top:10px;">
-                     <a href="{{ route('api.notification.send-notification', $notification['id']) }}"  class="btn btn-lg btn-primary">
-                        {{ __('api::app.notification.title') }}
-                    </a> 
 
-                    <button type="submit" class="btn btn-lg btn-primary">
-                        {{ __('api::app.notification.create-btn-title') }}
-                    </button>
-                </div>
+                {!! view_render_event('bagisto.admin.settings.notification.edit.card.general.after', ['notification' => $notification]) !!}
             </div>
 
-            <div class="page-content">
+            <!-- Right Section -->
+            <div class="flex flex-col gap-2 w-[360px] max-w-full rounded box-shadow">
+                <!-- Icon -->
+                {!! view_render_event('bagisto.admin.settings.notification.edit.card.log.before', ['notification' => $notification]) !!}
 
-                <div class="form-container">
-                    @csrf()
-                    <input name="_method" type="hidden" value="PUT">
-                    <input type="hidden" value="{{ $notification['id'] }}" name="notification_id" />
-                    
-                    <div class="control-group" :class="[errors.has('title') ? 'has-error' : '']">
-                        <label for="title" class="required">{{ __('api::app.notification.notification-title') }}</label>
+                        <div class="p-2.5 flex flex-col gap-2 w-full">
+                            <x-admin::form.control-group.label>
+                                @lang('api::app.notification.notification-image')
+                            </x-admin::form.control-group.label>
+                            <x-admin::media.images
+                                name="image"
+                                :uploaded-images="$notification->image ? [['id' => 'image', 'url' => Storage::url($notification->image)]] : []"
+                            />
 
-                        <input type="text" v-validate="'required'" class="control" id="title" name="title" value="{{ old('title') ?? (isset($notificationTranslation['title']) ? $notificationTranslation['title']: '') }}" data-vv-as="&quot;{{ __('api::app.notification.notification-title') }}&quot;" v-slugify-target="'slug'"/>
+                            <x-admin::form.control-group class="!mb-0">
+                                <x-admin::form.control-group.label>
+                                    @lang('api::app.notification.notification-status')
+                                </x-admin::form.control-group.label>
 
-                        <span class="control-error" v-if="errors.has('title')">@{{ errors.first('title') }}</span>
-                    </div>
-                    
-                    <div class="control-group" :class="[errors.has('content') ? 'has-error' : '']">
-                        <label for="content" class="required">{{ __('api::app.notification.notification-content') }}</label>
-                        
-                        <textarea class="control" name="content" v-validate="'required'" data-vv-as="&quot;{{ __('api::app.notification.notification-content') }}&quot;" cols="30" rows="10">{{ old('content') ?? (isset($notificationTranslation['content']) ? $notificationTranslation['content'] : '') }}
-                        </textarea>
-                        
-                        <span class="control-error" v-if="errors.has('content')">@{{ errors.first('content') }}</span>
-                    </div>
+                                @php $selectedValue = old('status') ?: $notification->image @endphp
 
-                    <div class="control-group" :class="[errors.has('image') ? 'has-error' : '']">
-                        <label for="image" class="required">
-                            {{ __('api::app.notification.notification-image') }}
-                        </label>
+                                <!-- Visible in menu Hidden field -->
+                                <x-admin::form.control-group.control
+                                    type="hidden"
+                                    class="cursor-pointer"
+                                    name="status"
+                                    :checked="(boolean) $selectedValue"
+                                />
 
-                        <image-wrapper :button-label="'{{ __('api::app.notification.notification-image') }}'" input-name="image" :multiple="false" :images='"{{ url('storage/'.$notification->image) }}"'></image-wrapper>
+                                <x-admin::form.control-group.control
+                                    type="switch"
+                                    class="cursor-pointer"
+                                    name="status"
+                                    value="1"
+                                    :label="trans('admin::app.catalog.categories.edit.visible-in-menu')"
+                                    :checked="(boolean) $selectedValue"
+                                />
+                            </x-admin::form.control-group>
 
-                        <span class="control-error" v-if="errors.has('image')">@{{ errors.first('image') }}</span>
-                    </div>
+                            <v-option-wrapper></v-option-wrapper>
+                        </div>
 
-                    <option-wrapper></option-wrapper>
 
-                    <div class="control-group" :class="[errors.has('channels[]') ? 'has-error' : '']" >
-                        <label for="reseller" class="required">
-                            {{ __('api::app.notification.store-view') }}
-                        </label>
-
-                        <select  v-validate="'required'" id="channels" class="control" name="channels[]" multiple="multiple" data-vv-as="&quot;{{ __('api::app.notification.store-view') }}&quot;">
-                            @foreach ($channels as $channelDetail)
-                                <option value="{{ $channelDetail->code }}"
-                                    @if ( in_array($channelDetail->code, $notification->notificationChannelsArray())) selected @endif >
-                                    {{ $channelDetail->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <span class="control-error" v-if="errors.has('channels[]')">@{{ errors.first('channels[]') }}
-                        </span>
-                    </div>
-
-                    <div class="control-group" :class="[errors.has('status') ? 'has-error' : '']">
-                        <label for="status">
-                            {{ __('api::app.notification.notification-status') }}
-                        </label>
-
-                        <select class="control" name="status" data-vv-as="&quot;{{ __('api::app.notification.notification-status') }}&quot;">
-                            <option value="1" {{ $notification->status == '1' ? 'selected' : '' }}>{{ __('api::app.notification.status.enabled') }}</option>
-                            <option value="0" {{ $notification->status == '0' ? 'selected' : '' }}>{{ __('api::app.notification.status.disabled') }}</option>
-                        </select>
-                        <span class="control-error" v-if="errors.has('status')">@{{ errors.first('status') }}</span>
-                    </div>
-                </div>
+                {!! view_render_event('bagisto.admin.settings.notification.edit.card.logo.after', ['notification' => $notification]) !!}
             </div>
-        </form>
-    </div>
-@stop
+        </div>
 
-@push('scripts')
-    <script type="text/x-template" id="options-template">
+        {!! view_render_event('bagisto.admin.settings.notification.edit.create_form_controls.after', ['notification' => $notification]) !!}
+
+    </x-admin::form>
+
+    {!! view_render_event('bagisto.admin.settings.notification.edit.after', ['notification' => $notification]) !!}
+
+    @pushOnce('scripts')
+    <script type="text/x-template" id="v-option-wrapper-template">
         <div>
-            <div class="control-group" :class="[errors.has('type') ? 'has-error' : '']">
-                <label for="type" class="required">
-                    {{ __('api::app.notification.notification-type') }}
-                </label>
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    @lang('api::app.notification.notification-type')
+                </x-admin::form.control-group.label>
 
-                <select class="control" id="type" name="type" v-validate="'required'" data-vv-as="&quot;{{ __('api::app.notification.notification-type') }}&quot;" @change="showHideOptions($event)" v-model="notificationType">
+                <x-admin::form.control-group.control
+                    type="select"
+                    id="type"
+                    class="cursor-pointer"
+                    name="type"
+                    rules="required"
+                    :value="old('type')"
+                    :label="trans('api::app.notification.notification-type')"
+                    v-model="notificationType"
+                    @change="showHideOptions($event)"
+                >
+                     <option value="">
+                        @lang('api::app.notification.notification-type-option.select')
+                    </option>
+                    <option value="others">
+                        @lang('api::app.notification.notification-type-option.simple')
+                    </option>
+                    <option value="product">
+                        @lang('api::app.notification.notification-type-option.product')
+                    </option>
+                    <option value="category">
+                        @lang('api::app.notification.notification-type-option.category')
+                    </option>
+                </x-admin::form.control-group.control>
 
-                    <option value="">{{ __('api::app.notification.notification-type-option.select') }}</option>
-                    <option value="others" {{ $notification->type == 'other' ? 'selected' : '' }}>{{ __('api::app.notification.notification-type-option.simple') }}</option>
-                    <option value="product" {{ $notification->type == 'product' ? 'selected' : '' }}>{{ __('api::app.notification.notification-type-option.product') }}</option>
-                    <option value="category" {{ $notification->type == 'category' ? 'selected' : '' }}>{{ __('api::app.notification.notification-type-option.category') }}</option>
-                </select>
-                <span class="control-error" v-if="errors.has('type')">@{{ errors.first('type') }}</span>
+                <x-admin::form.control-group.error control-name="type" />
+            </x-admin::form.control-group>
+
+            <div class="control-group" v-if="showProductCategory" id="product_category">
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('api::app.notification.product-cat-id')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="text"
+                        id="product_category_id"
+                        class="cursor-pointer"
+                        name="product_category_id"
+                        rules="required"
+                        :value="old('product_category_id')"
+                        :label="trans('api::app.notification.product-cat-id')"
+                        v-model="productCategoryInputBox"
+                        @keyup="checkIdExistOrNot"
+                    >
+
+                    </x-admin::form.control-group.control>
+
+                    <x-admin::form.control-group.error control-name="product_category_id" />
+                    <span class="mt-1 text-red-600 text-xs italic" v-if="message">
+                        @{{message}}
+                    </span>
+                </x-admin::form.control-group>
+
             </div>
-
-            <div class="control-group" id="productCat" :class="[errors.has('product_category_id') ? 'has-error' : '']" v-if="showProductCategory">
-                <label for="product_category_id" class="required">
-                    {{ __('api::app.notification.product-cat-id') }}
-                </label>
-
-                <input type="text" id="product_category_id" class="control" name="product_category_id" v-validate="showProductCategory ? 'required' : ''" data-vv-as="&quot;{{ __('api::app.notification.product-cat-id') }}&quot;" @keyup="checkIdExistOrNot" v-model="productCategoryInputBox" placeholder="{{ __('api::app.notification.product-cat-id') }}" >
-
-                <span class="control-error" v-if="errors.has('product_category_id')">@{{ errors.first('product_category_id') }}</span>
-            </div>
-
         </div>
     </script>
 
-    <script>
+    <script type="module">
+        app.component('v-option-wrapper', {
+            template: '#v-option-wrapper-template',
 
-        Vue.component('option-wrapper', {
-
-            template: '#options-template',
-
-            inject: ['$validator'],
-
-            data: function(data) {
+            data() {
                 return {
-                    showProductCategory: '{{ ($notification['type'] == 'product' || $notification['type'] == 'category') ?? false }}',
-                    notificationType : '{{ $notification['type'] }}',
-                    productCategoryInputBox : '{{ old('product_category_id') ?? $notification->product_category_id }}',
+                    showProductCategory: false,
+                    valid: '',
+                    notificationType : "{{ old('type') ?: $notification->type }}",
+                    productCategoryInputBox : "{{ old('product_category_id') ?: $notification->product_category_id }}",
                     message: '',
                     isValid: false,
-                    
+                }
+            },
+
+            mounted() {
+                if (this.notificationType == 'product' || this.notificationType == 'category' ) {
+                    this.showProductCategory = true;
                 }
             },
 
             methods: {
                 showHideOptions: function (event) {
-                    this_this = this;
-                    this_this.notificationType = event.target.value;
 
-                    this_this.showProductCategory = false;
+                    this.notificationType = event.target.value;
+
+                    this.showProductCategory = false;
                     if (event.target.value == 'product' || event.target.value == 'category' ) {
-                        this_this.showProductCategory = true;
+                        this.showProductCategory = true;
                     }
                 },
 
                 //id exist or not
                 checkIdExistOrNot(event) {
-                    this_this = this;
-                    var selectedType = this_this.notificationType;
-                    var givenValue = this_this.productCategoryInputBox;
+                    var selectedType = this.notificationType;
+                    var givenValue = this.productCategoryInputBox;
                     var spaceCount = (givenValue.split(" ").length - 1);
+                    this.message = '';
 
                     if (spaceCount > 0) {
-                        this_this.isValid = true;
+                        this.isValid = true;
                         return false;
                     }
-
-                    this_this.$http.post("{{ route('api.notification.cat-product-id') }}",{givenValue:givenValue, selectedType:selectedType})
-
-                    .then(response => {
-                        if(response.data.value) {
-                            $('#product_category').removeClass('has-error');
-                            this_this.isValid = response.data.value;
-                            this_this.message = response.data.message;
-                        } else {
-                            $('#product_category').addClass('has-error');
-                            this_this.message = response.data.message;
-                            this_this.isValid = response.data.value;
-                        }
-                    }).catch(function (error) {
-                        currentObj.output = error;
-                    });
+                    if (givenValue) {
+                        this.$axios.post("{{ route('api.notification.cat-product-id') }}",{givenValue:givenValue, selectedType:selectedType})
+                        .then(response => {
+                            if(response.data.value) {
+                                this.isValid = response.data.value;
+                                this.message = response.data.message;
+                            } else {
+                                this.message = response.data.message;
+                                this.isValid = response.data.value;
+                            }
+                        }).catch(function (error) {
+                           console.log(error);;
+                        });
+                    }
                 },
             },
         });
 
     </script>
 
-    <script>
-        $(document).ready(function () {
-            $('#channel-switcher, #locale-switcher').on('change', function (e) {
-                $('#channel-switcher').val()
-                var query = '?channel=' + $('#channel-switcher').val() + '&locale=' + $('#locale-switcher').val();
+    @endPushOnce
 
-                window.location.href = "{{ route('api.notification.edit', $notification->id)  }}" + query;
-            })
-        });
-    </script>
-@endpush
+</x-admin::layouts>

@@ -13,8 +13,6 @@ class Cart extends JsonResource
      * Transform the resource into an array.
      *
      * @param \Illuminate\Http\Request
-     *
-     * @return array
      */
     public function toArray($request): array
     {
@@ -79,12 +77,6 @@ class Cart extends JsonResource
         ];
     }
 
-    /**
-     * @param array $taxes
-     * @param bool  $isBase
-     *
-     * @return array
-     */
     private function formatTaxAmounts(array $taxes, bool $isBase = false): array
     {
         $result = [];

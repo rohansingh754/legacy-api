@@ -1,40 +1,30 @@
-@extends('admin::layouts.content')
-
-@section('page_title')
+<x-admin::layouts>
+    <x-slot:title>
     {{ __('api::app.notification.title') }}
-@stop
+    </x-slot>
 
-@section('content')
-    <div class="content">
-        <?php $locale = request()->get('locale') ?: null; ?>
-        <?php $channel = request()->get('channel') ?: null; ?>
+    <div class="flex gap-4 justify-between items-center max-sm:flex-wrap">
+        <p class="text-xl text-gray-800 dark:text-white font-bold">
+            {{ __('api::app.notification.title') }}
+        </p>
 
-        <div class="page-header">
-            <div class="page-title">
-                <h1>{{ __('api::app.notification.title') }}</h1>
-            </div>
-            
-            <div class="page-action">
-                <a href="{{ route('api.notification.create') }}" class="btn btn-lg btn-primary">
+        <div class="flex gap-x-2.5 items-center">
+            {!! view_render_event('bagisto.admin.settings.push-notification.index.create-button.before') !!}
+
+            <a href="{{ route('api.notification.create') }}">
+                <div class="primary-button">
                     {{ __('api::app.notification.add-title') }}
-                </a>
-            </div>
-        </div>
+                </div>
+            </a>
 
-        <div class="page-content">
-            <datagrid-plus src="{{ route('api.notification.index') }}"></datagrid-plus>
+            {!! view_render_event('bagisto.admin.settings.push-notification.index.create-button.after') !!}
         </div>
     </div>
-@stop
 
-@push('scripts')
-    <script>
-        function reloadPage(getVar, getVal) {
-            let url = new URL(window.location.href);
-            url.searchParams.set(getVar, getVal);
+    {!! view_render_event('bagisto.admin.settings.push-notification.list.before') !!}
 
-            window.location.href = url.href;
-        }
-        
-    </script>
-@endpush
+    <x-admin::datagrid src="{{ route('api.notification.index') }}" />
+
+    {!! view_render_event('bagisto.admin.settings.push-notification.list.after') !!}
+
+</x-admin::layouts>

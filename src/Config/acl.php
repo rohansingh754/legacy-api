@@ -45,5 +45,5 @@ return [
         'name'  => 'api::app.acl.send',
         'route' => 'api.notification.send-notification',
         'sort'  => 6,
-    ], 
+    ],
 ];

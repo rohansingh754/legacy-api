@@ -19,32 +19,33 @@ return [
     ],
 
     'notification'  => [
-        'title'                 => 'Push Notification',
-        'add-title'             => 'Add Notification',
-        'general'               => 'General',
-
-        'id'                    => 'Id',
-        'image'                 => 'Image',
-        'text-title'            => 'Title',
-        'edit-notification'     => 'Edit Notification',
-        'manage'                => 'Notifications',
-        'new-notification'      => 'New Notification',
-        'create-btn-title'      => 'Save Notification',
-        'notification-image'    => 'Notification Image',
-        'notification-title'    => 'Notification Title',
-        'notification-content'  => 'Notification Content',
-        'notification-type'     => 'Notification Type',
-        'product-cat-id'        => 'Product/Category Id',
-        'store-view'            => 'Channels',
-        'notification-status'   => 'Notification Status',
-        'created'               => 'Created',
-        'modified'              => 'Modified',
+        'title'                     => 'Push Notification',
+        'sub-title'                 => 'General',
+        'add-title'                 => 'Add Notification',
+        'general'                   => 'General',
+        'id'                        => 'Id',
+        'image'                     => 'Image',
+        'text-title'                => 'Title',
+        'edit-notification'         => 'Edit Notification',
+        'manage'                    => 'Notifications',
+        'new-notification'          => 'New Notification',
+        'create-btn-title'          => 'Save Notification',
+        'notification-image'        => 'Notification Image',
+        'notification-title'        => 'Notification Title',
+        'notification-content'      => 'Notification Content',
+        'notification-type'         => 'Notification Type',
+        'product-cat-id'            => 'Product/Category Id',
+        'store-view'                => 'Channels',
+        'notification-status'       => 'Notification Status',
+        'created'                   => 'Created',
+        'modified'                  => 'Modified',
         'collection-autocomplete'   => 'Custom Collection - (Autocomplete)',
         'no-collection-found'       => 'Collections not found with same name.',
         'collection-search-hint'    => 'Start typing collection name',
-        
-        'Action'    => [
+
+        'action'    => [
             'edit'      => 'Edit',
+            'back'      => 'Back',
         ],
 
         'status'    => [
@@ -66,6 +67,15 @@ return [
         'delete-success'        => ':name deleted successfully',
         'delete-failed'         => ':name deleted failed',
         'sended-successfully'   => ':name pushed successfully for android and iOS.',
+        'sended-fails'          => ':name pushed fail',
         'no-value-selected'     => 'there are no existing value',
+    ],
+
+    'datagride' => [
+        'edit'          => 'Edit',
+        'delete'        => 'Delete',
+        'update-status' => 'Update Status',
+        'active'        => 'Active',
+        'inactive'      => 'Disabled',
     ],
 ];

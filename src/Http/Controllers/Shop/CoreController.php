@@ -2,8 +2,6 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Illuminate\Http\Request;
-
 class CoreController extends Controller
 {
     /**
@@ -18,7 +16,7 @@ class CoreController extends Controller
         foreach (explode(',', request()->input('_config')) as $config) {
             $configValues[$config] = core()->getConfigData($config);
         }
-        
+
         return response()->json([
             'data' => $configValues,
         ]);
@@ -34,7 +32,7 @@ class CoreController extends Controller
         $countyStates = [];
         foreach (core()->groupedStatesByCountries() as $country_code => $states) {
             $country = app('Webkul\Core\Repositories\CountryRepository')->findOneByField('code', $country_code);
-            
+
             $countyStates[] = [
                 'country_id'        => $country['id'],
                 'name'              => $country['name'],
@@ -44,7 +42,7 @@ class CoreController extends Controller
                 'states'            => $states,
             ];
         }
-        
+
         return response()->json([
             'data' => $countyStates,
         ]);

@@ -6,7 +6,6 @@ use Webkul\Customer\Repositories\WishlistRepository;
 
 class SendNotification
 {
-
     /**
      * Wishlist repository instance.
      *
@@ -34,26 +33,26 @@ class SendNotification
     {
         $notificationTranslations = $data->translations()->where([
             ['channel', '=', core()->getRequestedChannelCode()],
-            ['locale', '=', core()->getRequestedLocaleCode()]
+            ['locale', '=', core()->getRequestedLocaleCode()],
         ])->first();
-        
-        if ( $notificationTranslations ) {
+
+        if ($notificationTranslations) {
             $data->title = $notificationTranslations->title;
             $data->content = $notificationTranslations->content;
         }
 
         // for android device
-        $url        = "https://fcm.googleapis.com/fcm/send";
-        $authKey    = core()->getConfigData('general.api.pushnotification.server_key');
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $authKey = core()->getConfigData('general.api.pushnotification.server_key');
         $androidTopic = core()->getConfigData('general.api.pushnotification.android_topic');
-        $iosTopic   = core()->getConfigData('general.api.pushnotification.ios_topic');
+        $iosTopic = core()->getConfigData('general.api.pushnotification.ios_topic');
 
         switch ($type = $data->type) {
-            case 'product' :
+            case 'product':
                 $product = app('Webkul\Product\Repositories\ProductRepository')->findorfail($data->product_category_id);
 
-                $targeturl = route('shop.productOrCategory.index', $product->url_key);
-                
+                $targeturl = route('shop.product_or_category.index', $product->url_key);
+
                 $fieldData = [
                     'body'              => $data->content,
                     'title'             => $data->title,
@@ -62,20 +61,20 @@ class SendNotification
                     'notificationType'  => $type,
                     'productName'       => $product->name ?? '',
                     'productId'         => $product->id ?? '',
-                    'banner_url'        => asset('storage/'.$data->image),
+                    'banner_url'        => asset('storage/' . $data->image),
                     'id'                => $data->id,
                     'sound'             => 'default',
                 ];
-            break;
+                break;
 
             case 'category':
                 $category = app('Webkul\Category\Repositories\CategoryRepository')->findorfail($data->product_category_id);
-                
-                $targeturl = route('shop.productOrCategory.index', $category->slug);
+
+                $targeturl = route('shop.product_or_category.index', $category->slug);
                 $fieldData = [
                     'categoryName'      => $category->name ?? '',
                     'categoryId'        => $category->id ?? '',
-                    'banner_url'        => asset('storage/'.$data->image),
+                    'banner_url'        => asset('storage/' . $data->image),
                     'id'                => $data->id,
                     'body'              => $data->content,
                     'sound'             => 'default',
@@ -83,51 +82,50 @@ class SendNotification
                     'message'           => $data->content,
                     'notificationType'  => $data->type,
                 ];
-            break;
+                break;
 
             case 'others':
                 $targeturl = route('shop.home.index');
                 $fieldData = [
-                    'banner_url'        => asset('storage/'.$data->image),
+                    'banner_url'        => asset('storage/' . $data->image),
                     'id'                => $data->id,
                     'body'              => $data->content,
                     'sound'             => 'default',
                     'title'             => $data->title,
                     'message'           => $data->content,
-                    'notificationType'  => $data->type
+                    'notificationType'  => $data->type,
                 ];
-            break;
+                break;
         }
 
-        $fields = array(
-            'to'    => '/topics/' . $androidTopic,
-            'data'  => $fieldData,
-            'notification' =>  [
+        $fields = [
+            'to'           => '/topics/' . $androidTopic,
+            'data'         => $fieldData,
+            'notification' => [
                 'body'  => $data->content,
                 'title' => $data->title,
             ],
-        );
+        ];
 
-        $headers = array(
+        $headers = [
             'Content-Type:application/json',
             'Authorization:key=' . $authKey,
-        );
+        ];
 
         try {
             // Open connection
             $ch = curl_init();
 
-            curl_setopt( $ch, CURLOPT_URL, $url );
-            curl_setopt( $ch, CURLOPT_POST, true );
-            curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
-            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             // Disabling SSL Certificate support temporarly
-            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-            curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $fields ) );
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
             // Execute post
-            $result = curl_exec( $ch );
-            curl_close( $ch );
-
+            $result = curl_exec($ch);
+            curl_close($ch);
         } catch (\Exception $e) {
             session()->flash('error', $e);
         }
@@ -138,6 +136,7 @@ class SendNotification
     public function isJson($string)
     {
         json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
+
+        return json_last_error() == JSON_ERROR_NONE;
     }
 }

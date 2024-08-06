@@ -2,8 +2,8 @@
 
 namespace Webkul\API\Http\Resources\Checkout;
 
-use Illuminate\Http\Resources\Json\JsonResource;
 use Cart;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class CartShippingRate extends JsonResource
 {
@@ -29,7 +29,7 @@ class CartShippingRate extends JsonResource
             'base_price'          => (float) $this->base_price,
             'formated_base_price' => (string) core()->formatBasePrice($this->base_price),
             'created_at'          => $this->created_at,
-            'updated_at'          => $this->updated_at
+            'updated_at'          => $this->updated_at,
         ];
     }
 }

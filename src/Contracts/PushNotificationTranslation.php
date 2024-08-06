@@ -2,6 +2,4 @@
 
 namespace Webkul\API\Contracts;
 
-interface PushNotificationTranslation
-{
-}
+interface PushNotificationTranslation {}

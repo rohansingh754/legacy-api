@@ -3,8 +3,8 @@
 namespace Webkul\API\Http\Controllers\Shop;
 
 use Illuminate\Http\Request;
-use Webkul\Product\Repositories\ProductReviewRepository;
 use Webkul\API\Http\Resources\Catalog\ProductReview as ProductReviewResource;
+use Webkul\Product\Repositories\ProductReviewRepository;
 
 class ReviewController extends Controller
 {
@@ -25,14 +25,13 @@ class ReviewController extends Controller
         $this->guard = request()->has('token') ? 'api' : 'customer';
 
         auth()->setDefaultDriver($this->guard);
-        
+
         $this->middleware('validateAPIHeader');
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -53,7 +52,7 @@ class ReviewController extends Controller
             'product_id'  => $id,
             'comment'     => $request->comment,
             'rating'      => $request->rating,
-            'title'       => $request->title
+            'title'       => $request->title,
         ]);
 
         return response()->json([

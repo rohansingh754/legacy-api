@@ -4,15 +4,15 @@ namespace Webkul\API\Http\Controllers\Shop;
 
 use Cart;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Event;
-use Webkul\Checkout\Repositories\CartRepository;
-use Webkul\Checkout\Repositories\CartItemRepository;
-use Webkul\Customer\Repositories\WishlistRepository;
+use Illuminate\Support\Facades\Log;
 use Webkul\API\Http\Resources\Checkout\Cart as CartResource;
+use Webkul\Checkout\Repositories\CartItemRepository;
+use Webkul\Checkout\Repositories\CartRepository;
+use Webkul\Customer\Repositories\WishlistRepository;
 
 class CartController extends Controller
 {
@@ -26,9 +26,7 @@ class CartController extends Controller
     /**
      * Controller instance
      *
-     * @param \Webkul\Checkout\Repositories\CartRepository     $cartRepository
-     * @param \Webkul\Checkout\Repositories\CartItemRepository $cartItemRepository
-     * @param \Webkul\Checkout\Repositories\WishlistRepository $wishlistRepository
+     * @param  \Webkul\Checkout\Repositories\WishlistRepository  $wishlistRepository
      */
     public function __construct(
         protected CartRepository $cartRepository,
@@ -40,7 +38,7 @@ class CartController extends Controller
         auth()->setDefaultDriver($this->guard);
 
         // $this->middleware('auth:' . $this->guard);
-        
+
         $this->middleware('validateAPIHeader');
 
         $this->_config = request('_config');
@@ -62,13 +60,10 @@ class CartController extends Controller
         ]);
     }
 
-
     /**
      * Store a newly created resource in storage.
      *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @param  int  $id
      */
     public function store($id): ?JsonResponse
     {
@@ -102,14 +97,14 @@ class CartController extends Controller
                 'data'    => $cart ? new CartResource($cart) : null,
             ]);
         } catch (Exception $e) {
-            Log::error('API CartController: ' . $e->getMessage(),
+            Log::error('API CartController: '.$e->getMessage(),
                 ['product_id' => $id, 'cart_id' => cart()->getCart() ?? 0]);
 
             return response()->json([
                 'error' => [
                     'message' => $e->getMessage(),
-                    'code'    => $e->getCode()
-                ]
+                    'code'    => $e->getCode(),
+                ],
             ]);
         }
     }
@@ -179,8 +174,7 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param int $id
-     *
+     * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroyItem($id)
@@ -204,8 +198,7 @@ class CartController extends Controller
     /**
      * Function to move a already added product to wishlist will run only on customer authentication.
      *
-     * @param \Webkul\Checkout\Repositories\CartItemRepository $id
-     *
+     * @param  \Webkul\Checkout\Repositories\CartItemRepository  $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function moveToWishlist($id)

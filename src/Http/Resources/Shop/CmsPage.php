@@ -19,7 +19,7 @@ class CmsPage extends JsonResource
      * @var string
      */
     protected $localeCode;
-    
+
     /**
      * Create a new resource instance.
      *
@@ -28,7 +28,7 @@ class CmsPage extends JsonResource
     public function __construct($resource)
     {
         $this->cmsRepository = app('Webkul\CMS\Repositories\CmsRepository');
-        
+
         parent::__construct($resource);
     }
 
@@ -41,34 +41,33 @@ class CmsPage extends JsonResource
     public function toArray($request)
     {
         $cms_content = [];
-        
+
         foreach ($this->getAll() as $cms) {
             $content = [
                 'id'        => $cms->cms_page_id,
                 'url_key'   => $cms->url_key,
                 'title'     => $cms->page_title,
             ];
-            
-            if ( request()->input('full_content') ) {
-                $content['meta_title']          = $cms->meta_title;
-                $content['meta_keywords']       = $cms->meta_keywords;
-                $content['meta_description']    = $cms->meta_description;
-                $content['content']             = $cms->html_content;
-                $content['created_at']          = $cms->created_at;
-                $content['updated_at']          = $cms->updated_at;
+
+            if (request()->input('full_content')) {
+                $content['meta_title'] = $cms->meta_title;
+                $content['meta_keywords'] = $cms->meta_keywords;
+                $content['meta_description'] = $cms->meta_description;
+                $content['content'] = $cms->html_content;
+                $content['created_at'] = $cms->created_at;
+                $content['updated_at'] = $cms->updated_at;
             }
-            
+
             $cms_content[] = $content;
         }
-        
+
         return [
             'success'   => count($cms_content) ? true : false,
-            'pages'     => $cms_content
+            'pages'     => $cms_content,
         ];
     }
 
     /**
-     *
      * @return \Illuminate\Support\Collection
      */
     public function getAll()

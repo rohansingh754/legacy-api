@@ -33,7 +33,7 @@ class HomeController extends Controller
         auth()->setDefaultDriver($this->guard);
 
         $this->middleware('auth:' . $this->guard)->except(['index']);
-        
+
         $this->middleware('validateAPIHeader');
 
         $this->_config = request('_config');
@@ -41,15 +41,13 @@ class HomeController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\JsonResponse
      */
     public function index(): ?JsonResponse
     {
         $data = request()->all();
-        
+
         return response()->json(new HomePageResource(array_merge($data, [
-            'customer' => auth($this->guard)->user()
+            'customer' => auth($this->guard)->user(),
         ])));
     }
 }
